@@ -7,6 +7,7 @@
 - Buscados executáveis e pastas de instalação, sem Godot/dotnet; APT sem índices. Carga oficial via GitHub API confirmou redirect de asset para host fora do allowlist. Hosts Microsoft oficiais testados com TLS normal retornam `curl` 35 (`SSL_ERROR_SYSCALL`). Não contornado TLS.
 - Consultados manifestos WinGet e registrados comandos oficiais/versionados no checkpoint para Windows. Nenhuma toolchain foi instalada nesta VM.
 - `npm run check` passou com 4/4 testes Node; doctor e três comandos target bloqueados como detalhado em `CHECKPOINT.md`. Integração SQLite/PostgreSQL não existe no scaffold, então não foi alegada nem testada.
+- Commit `def86f0` publicado na branch ativa; PR #1 aberto para `main`. Fase 0 continua pendente de builds/execuções reais.
 
 ## 2026-10-27 — Reconciliação e scaffold de destino (Fase 0 incompleta)
 
@@ -17,7 +18,7 @@
 - `npm run check` executado neste sandbox: 4/4 testes Node do protótipo passaram; sintaxe dos novos scripts passou.
 - `npm run doctor` status 1 por ausência de Godot/.NET. Smoke shared retornou 127 (`dotnet: not found`); smokes server/client retornaram status 2 e `TARGET_TEST_BLOCKED`. Nenhum build C#, teste de integração do novo servidor, boot Godot, banco ou carga foi executado.
 - Revisada a documentação oficial Godot 4.7: Godot empacota o runtime para executar jogos, mas exige .NET SDK para compilação; SDK 8 ou posterior é aceito. Corrigida a suposição anterior de que seria necessário instalar runtime .NET 8 separado. O client continua em `net8.0`; verificar targeting pack no restore.
-- Diagnóstico da rede: asset GitHub Godot redireciona para `release-assets.githubusercontent.com` fora do allowlist; CDN/hosts Microsoft retornam TLS `curl 35`. Registrados comandos WinGet verificados por manifest para instalação Windows oficial; sem bypass de TLS nem instalação neste sandbox.
+- Diagnóstico da rede: asset GitHub Godot redireciona para `objects.githubusercontent.com`/`release-assets.githubusercontent.com` fora do allowlist; hosts Microsoft testados retornam TLS `curl 35`. Registrados comandos WinGet verificados por manifest para instalação Windows oficial; sem bypass de TLS nem instalação neste sandbox.
 - O smoke do server foi ampliado para medir taxa média de ticks por 1 s (tolerância 15–25 Hz), sem confundir clock com simulação; não foi executado por falta do SDK.
 - Fase 0 permanece incompleta. Próximo passo: provisionar toolchain oficial compatível e executar `npm run test:target`; corrigir erros reais; então completar persistência/autenticação de Fase 1 e só avançar mediante critérios.
 
