@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "monster.forest.wolf_gray",
+  "name_key": "monster.forest.wolf_gray.name",
+  "level": 8,
+  "stats": { "hp": 220, "atk_min": 9, "atk_max": 15, "def": 6, "move_speed": 4.2, "attack_range": 1.8, "attack_cooldown": 1.4 },
+  "ai": { "behavior": "aggressive", "aggro_radius": 9, "leash_radius": 25, "group_call_radius": 8 },
+  "skills": ["skill.monster.bite"],
+  "xp": 36,
+  "zen": { "min": 8, "max": 20 },
+  "drop_table": "drop.forest.wolf_gray",
+  "respawn_seconds": 30,
+  "resist": { "poison": 0.0, "ice": 0.1 },
+  "visual": { "model": "asset.model.wolf_gray", "scale": 1.0, "sounds": "asset.snd.wolf" }
+}

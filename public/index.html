@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#101713" />
+  <title>Projeto RPG — Fronteiras Livres</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="world" aria-label="Mundo do jogo"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <section id="login" class="modal-shell">
+      <div class="login-card">
+        <div class="eyebrow"><span class="eyebrow-line"></span> UM MUNDO EM CONSTRUÇÃO <span class="eyebrow-line"></span></div>
+        <div class="brand-mark"><span class="brand-gem">✦</span><span>FRONTEIRAS<br /><strong>LIVRES</strong></span></div>
+        <p class="intro">Uma aventura compartilhada começa com um passo.</p>
+        <label class="field-label" for="player-name">NOME DO AVENTUREIRO</label>
+        <input id="player-name" maxlength="18" autocomplete="nickname" placeholder="Como vão te chamar?" value="Aventureiro" />
+        <div class="field-label class-heading">ESCOLHA SUA CLASSE</div>
+        <div id="class-options" class="class-options"></div>
+        <button id="play-button" class="primary-button">ENTRAR NO MUNDO <span>→</span></button>
+        <p class="login-foot"><span class="online-dot"></span> Mundo online · protótipo em desenvolvimento</p>
+      </div>
+    </section>
+
+    <div id="hud" class="hud hidden">
+      <header class="topbar">
+        <div class="world-brand"><span class="mini-sigil">✦</span><div><b>FRONTEIRAS LIVRES</b><small id="region-subtitle">MUNDO ABERTO</small></div></div>
+        <div class="region-pill"><span class="region-dot"></span><span id="region-name">Campina do Alvorecer</span></div>
+        <div class="online-pill"><span class="online-dot"></span><span id="online-count">1</span> online</div>
+      </header>
+      <section class="player-card hud-panel">
+        <div class="player-card-top"><div class="avatar-gem" id="avatar-gem">◆</div><div class="player-meta"><b id="hud-player-name">Aventureiro</b><small id="hud-class">Guardião · Nv. 1</small></div><button id="menu-button" class="icon-button" title="Controles">?</button></div>
+        <div class="bar-label"><span>VIDA</span><span id="hp-numbers">150 / 150</span></div><div class="bar-track"><div id="hp-bar" class="hp-fill"></div></div>
+        <div class="bar-label xp-label"><span>EXPERIÊNCIA</span><span id="xp-numbers">0 / 100</span></div><div class="bar-track xp-track"><div id="xp-bar" class="xp-fill"></div></div>
+      </section>
+      <section class="target-card hud-panel hidden" id="target-card"><div class="target-heading"><span id="target-icon">◆</span><div><b id="target-name">Criatura</b><small id="target-type">Criatura selvagem</small></div><button id="clear-target" class="icon-button">×</button></div><div class="bar-track target-track"><div id="target-hp" class="target-fill"></div></div></section>
+      <section class="quest-card hud-panel"><div class="quest-label"><span>✧</span> PRIMEIROS PASSOS</div><p>Explore a campina, conheça Nara e derrote criaturas para ganhar experiência.</p><div class="quest-hint">Siga o brilho dourado para encontrar a guia.</div></section>
+      <div class="controls-hint hud-panel"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mover</span><i></i><span><kbd>ESPAÇO</kbd> atacar</span><i></i><span><kbd>E</kbd> interagir</span></div>
+      <div id="notice-stack" class="notice-stack"></div>
+      <div id="dialogue" class="dialogue-card hud-panel hidden"><div class="dialogue-title"><span>✦</span><b id="dialogue-name"></b><button id="dialogue-close" class="icon-button">×</button></div><p id="dialogue-text"></p><small>Pressione E para continuar</small></div>
+      <div class="chat-wrap"><div id="chat-feed" class="chat-feed"></div><form id="chat-form" class="chat-form"><span>↵</span><input id="chat-input" maxlength="120" placeholder="Enter para conversar…" autocomplete="off" /></form></div>
+      <aside id="help-popover" class="help-popover hud-panel hidden"><button id="help-close" class="icon-button">×</button><b>CONTROLES</b><p><kbd>W A S D</kbd> mover · <kbd>Espaço</kbd> atacar alvo · <kbd>E</kbd> falar / usar portal</p><p>Clique em uma criatura para selecioná-la. O servidor valida movimento, alcance e combate.</p></aside>
+      <div class="build-tag">ALPHA 0.1 <span>•</span> DADOS DO MUNDO CARREGADOS</div>
+    </div>
+    <div id="connection-status" class="connection-status hidden"><span></span> Reconectando ao mundo…</div>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

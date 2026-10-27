@@ -1,0 +1,21 @@
+{
+  "name": "projetorpg",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MMORPG 3D persistente; protótipo Node legado mantido separadamente durante a migração.",
+  "engines": { "node": ">=22.22.3 <23" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --test",
+    "check": "node --check server.js && node --check public/app.js && node --check scripts/check-toolchain.js && node --check scripts/target-server-smoke.js && node --check scripts/target-godot-smoke.js && npm test",
+    "doctor": "node scripts/check-toolchain.js",
+    "test:target:shared": "dotnet run --project tests/Shared.Smoke/Shared.Smoke.csproj",
+    "test:target:server": "node scripts/target-server-smoke.js",
+    "test:target:client": "node scripts/target-godot-smoke.js",
+    "test:target": "npm run test:target:shared && npm run test:target:server && npm run test:target:client"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

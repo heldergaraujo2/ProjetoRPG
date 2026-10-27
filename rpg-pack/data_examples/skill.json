@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "skill.guerreiro.golpe_giratorio",
+  "class": "guerreiro",
+  "name_key": "skill.guerreiro.golpe_giratorio.name",
+  "level_req": 20,
+  "req": { "str": 60 },
+  "cost": { "mana": 15, "ag": 10 },
+  "cooldown": 6.0,
+  "cast_time": 0.4,
+  "target": "self_aoe",
+  "radius": 4.0,
+  "damage": { "type": "physical", "formula": "weapon_dmg * 1.4 + str * 0.5", "pvp_coeff_key": "pvp.skill.golpe_giratorio" },
+  "effects": [{ "status": "slow", "chance": 0.3, "duration": 2.0, "diminishing_group": "movement_control" }],
+  "visual": { "anim": "asset.anim.spin_attack", "vfx": "asset.vfx.spin_slash", "sound": "asset.snd.spin" }
+}

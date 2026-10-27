@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content.schema.manifest.v1",
+  "title": "ProjetoRPG content manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contentVersion", "entries"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contentVersion": { "type": "string", "minLength": 1 },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "path"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(?:[._][a-z0-9]+)*$" },
+          "kind": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

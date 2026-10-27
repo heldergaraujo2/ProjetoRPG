@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "description": "Contrato de renderização: troque meshPath por GLB/GLTF e implemente um renderer 3D sem alterar identidade, atributos ou lógica de jogo.",
+  "placeholders": {
+    "player.guardiao": { "geometry": "rounded-capsule", "meshPath": null, "scale": 1, "anchor": "feet" },
+    "player.cacador": { "geometry": "triangle", "meshPath": null, "scale": 1, "anchor": "feet" },
+    "player.arcanista": { "geometry": "diamond", "meshPath": null, "scale": 1, "anchor": "feet" },
+    "mob.slime": { "geometry": "circle", "meshPath": null, "scale": 1, "anchor": "feet" },
+    "mob.wisp": { "geometry": "diamond", "meshPath": null, "scale": 1, "anchor": "feet" },
+    "mob.golem": { "geometry": "square", "meshPath": null, "scale": 1, "anchor": "feet" },
+    "npc.guide": { "geometry": "hexagon", "meshPath": null, "scale": 1, "anchor": "feet" },
+    "npc.vendor": { "geometry": "square", "meshPath": null, "scale": 1, "anchor": "feet" }
+  },
+  "supportedFormats": [".glb", ".gltf"]
+}

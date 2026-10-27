@@ -1,0 +1,12 @@
+node_modules/
+.env
+.DS_Store
+npm-debug.log*
+
+# .NET / Godot generated files
+**/bin/
+**/obj/
+client/.godot/
+*.user
+*.suo
+.vs/

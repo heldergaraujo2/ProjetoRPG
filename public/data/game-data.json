@@ -1,0 +1,48 @@
+{
+  "classes": {
+    "guardiao": { "name": "Guardião", "role": "Linha de frente", "color": "#64c8ff", "hp": 150, "damage": 22, "range": 82, "cooldown": 850, "speed": 205, "description": "Resistente e confiável. Golpe curto, vida alta." },
+    "cacador": { "name": "Caçador", "role": "Dano à distância", "color": "#8ee07b", "hp": 112, "damage": 18, "range": 205, "cooldown": 700, "speed": 225, "description": "Ágil e preciso. Ataque rápido de alcance médio." },
+    "arcanista": { "name": "Arcanista", "role": "Dano mágico", "color": "#c39bff", "hp": 100, "damage": 30, "range": 175, "cooldown": 1150, "speed": 215, "description": "Explosão de dano e recarga maior. Posicione-se bem." }
+  },
+  "creatures": {
+    "slime": { "name": "Geleca", "color": "#55cf9e", "shape": "circle", "hp": 54, "damage": 8, "range": 48, "cooldown": 1400, "speed": 62, "xp": 24, "aggro": 230 },
+    "wisp": { "name": "Fagulha", "color": "#e89dff", "shape": "diamond", "hp": 78, "damage": 12, "range": 125, "cooldown": 1800, "speed": 46, "xp": 38, "aggro": 270 },
+    "golem": { "name": "Sentinela", "color": "#e8a86d", "shape": "square", "hp": 145, "damage": 16, "range": 60, "cooldown": 1600, "speed": 38, "xp": 62, "aggro": 250 }
+  },
+  "maps": {
+    "campina": {
+      "name": "Campina do Alvorecer", "subtitle": "Terras livres · Nível 1–5", "theme": "meadow", "width": 2800, "height": 2000,
+      "spawn": { "x": 420, "y": 960 },
+      "portals": [{ "id": "portal-ruinas", "name": "Passagem para as Ruínas", "x": 2670, "y": 1000, "radius": 90, "to": "ruinas", "at": { "x": 180, "y": 950 } }],
+      "npcs": [
+        { "id": "nara", "name": "Nara, guia", "type": "guide", "x": 540, "y": 910, "color": "#ffd27a", "dialogue": "Bem-vindo à Campina! Explore, derrote criaturas e use WASD para se mover." },
+        { "id": "ferreiro", "name": "Oren, ferreiro", "type": "vendor", "x": 620, "y": 1000, "color": "#f19a73", "dialogue": "Ainda estou preparando meu catálogo. Volte em breve!" }
+      ],
+      "spawns": [
+        { "id": "slime-a", "kind": "slime", "x": 870, "y": 830 }, { "id": "slime-b", "kind": "slime", "x": 1080, "y": 1140 },
+        { "id": "slime-c", "kind": "slime", "x": 1370, "y": 690 }, { "id": "slime-d", "kind": "slime", "x": 1560, "y": 1260 },
+        { "id": "slime-e", "kind": "slime", "x": 1950, "y": 930 }, { "id": "wisp-a", "kind": "wisp", "x": 1740, "y": 550 }
+      ],
+      "landmarks": [
+        { "type": "lake", "x": 1270, "y": 1550, "w": 360, "h": 185, "color": "#60b8c5" },
+        { "type": "grove", "x": 890, "y": 440, "count": 13 }, { "type": "grove", "x": 2210, "y": 1430, "count": 15 },
+        { "type": "ruin", "x": 2070, "y": 480, "count": 4 }, { "type": "grove", "x": 720, "y": 1510, "count": 10 }
+      ]
+    },
+    "ruinas": {
+      "name": "Ruínas de Brasa", "subtitle": "Zona perigosa · Nível 3–8", "theme": "ember", "width": 2400, "height": 1800,
+      "spawn": { "x": 180, "y": 950 },
+      "portals": [{ "id": "portal-campina", "name": "Voltar à Campina", "x": 90, "y": 950, "radius": 90, "to": "campina", "at": { "x": 2580, "y": 1000 } }],
+      "npcs": [{ "id": "sentinela", "name": "Sentinela antiga", "type": "guide", "x": 340, "y": 870, "color": "#d5a5ff", "dialogue": "Estas pedras guardam memórias de uma era esquecida." }],
+      "spawns": [
+        { "id": "wisp-b", "kind": "wisp", "x": 700, "y": 780 }, { "id": "wisp-c", "kind": "wisp", "x": 1020, "y": 1120 },
+        { "id": "golem-a", "kind": "golem", "x": 1400, "y": 770 }, { "id": "golem-b", "kind": "golem", "x": 1760, "y": 1200 },
+        { "id": "wisp-d", "kind": "wisp", "x": 1980, "y": 670 }
+      ],
+      "landmarks": [
+        { "type": "lava", "x": 960, "y": 1380, "w": 390, "h": 160, "color": "#d96c4b" },
+        { "type": "ruin", "x": 740, "y": 500, "count": 8 }, { "type": "ruin", "x": 1850, "y": 1380, "count": 9 }
+      ]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "boss.forest.ancient_stag",
+  "extends": "monster.forest.stag_base",
+  "name_key": "boss.forest.ancient_stag.name",
+  "level": 40,
+  "stats": { "hp": 250000, "atk_min": 300, "atk_max": 420, "def": 180 },
+  "threat": { "mode": "damage_and_heal", "decay_per_sec": 0.02 },
+  "phases": [
+    { "from_hp_pct": 100, "to_hp_pct": 70, "skills": ["skill.boss.stomp"] },
+    { "from_hp_pct": 70, "to_hp_pct": 30, "skills": ["skill.boss.stomp", "skill.boss.summon_wolves"], "on_enter": { "announce": "boss.forest.ancient_stag.phase2" } },
+    { "from_hp_pct": 30, "to_hp_pct": 0, "enrage": { "atk_mult": 1.5 }, "skills": ["skill.boss.stomp", "skill.boss.root_AOE"] }
+  ],
+  "spawn": { "mode": "scheduled", "cron": "0 20 * * *", "map": "map.forest_01", "point": "spawn.boss_stag", "global_announce": true },
+  "drop_table": "drop.boss.ancient_stag",
+  "loot_rule": "top_damage_party_then_free"
+}

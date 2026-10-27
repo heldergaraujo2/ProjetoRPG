@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "quest.town01.wolf_pelts",
+  "name_key": "quest.town01.wolf_pelts.name",
+  "type": "collect",
+  "repeatable": false,
+  "requires": { "level_min": 5, "quests_done": [] },
+  "giver": "npc.town01.blacksmith",
+  "steps": [
+    { "id": "s1", "objective": { "kind": "collect", "item": "item.material.wolf_pelt", "count": 10, "source_monsters": ["monster.forest.wolf_gray"] }, "text_key": "quest.town01.wolf_pelts.s1" },
+    { "id": "s2", "objective": { "kind": "talk", "npc": "npc.town01.blacksmith" }, "text_key": "quest.town01.wolf_pelts.s2" }
+  ],
+  "rewards": { "xp": 400, "zen": 1500, "items": [{ "id": "item.armor.leather_vest_01", "count": 1 }], "stat_points": 0 },
+  "on_complete_unlock": ["quest.town01.wolf_pelts_2"]
+}

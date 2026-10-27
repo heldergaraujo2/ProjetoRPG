@@ -1,0 +1,19 @@
+; ProjetoRPG Godot C# client foundation
+; Godot 4.7.2-stable .NET; see docs/adr/ADR-001-stack.md.
+
+config_version=5
+
+[application]
+
+config/name="ProjetoRPG"
+run/main_scene="res://Scenes/Bootstrap.tscn"
+config/features=PackedStringArray("4.7", "C#")
+
+[dotnet]
+
+project/assembly_name="ProjetoRpg.Client"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

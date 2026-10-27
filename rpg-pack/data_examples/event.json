@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "event.fortress_assault",
+  "name_key": "event.fortress_assault.name",
+  "type": "instanced_pve",
+  "level_bands": [[15, 80], [81, 130], [131, 200]],
+  "max_players": 10,
+  "entry": { "item_recipe": "recipe.fortress_pass", "fee_zen": 0 },
+  "schedule": { "cron": "0 */2 * * *", "register_minutes": 5, "duration_minutes": 20 },
+  "rules": { "death_penalty": "none", "allow_teleport": false, "allow_pets": false, "allow_potions": true },
+  "states": [
+    { "id": "waiting", "on_enter": ["announce_start"], "next": "gate_phase", "after_seconds": 60 },
+    { "id": "gate_phase", "objectives": [{ "kind": "kill", "monster": "monster.event.gate_guardian", "count": 1 }], "next": "relic_phase" },
+    { "id": "relic_phase", "objectives": [{ "kind": "carry_item", "item": "item.event.relic", "to": "point.altar" }], "next": "boss_phase" },
+    { "id": "boss_phase", "objectives": [{ "kind": "kill", "monster": "boss.event.fortress_lord", "count": 1 }], "next": "finish" },
+    { "id": "finish", "rewards": "per_contribution", "teleport_out_after": 30 }
+  ],
+  "rewards": { "survivor": [{ "item": "item.gem.chaos_like", "count": 1 }], "top_contributor": [{ "item": "item.chest.event_gear", "count": 1 }] }
+}
