@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "drop.forest.wolf_gray",
+  "groups": [
+    { "id": "materials", "chance": 0.35, "entries": [
+      { "item": "item.material.wolf_pelt", "weight": 80, "count": [1, 2] },
+      { "item": "item.material.wolf_fang", "weight": 20, "count": [1, 1] } ] },
+    { "id": "gear", "chance": 0.04, "level_band": [5, 20], "entries": [
+      { "item": "item.weapon.sword_iron_01", "weight": 30 },
+      { "item": "item.armor.leather_vest_01", "weight": 40 },
+      { "item": "item.armor.leather_boots_01", "weight": 30 } ],
+      "roll_options": { "luck": 0.10, "skill": 0.08, "extra_option": [{ "level": 1, "p": 0.15 }, { "level": 2, "p": 0.05 }], "excellent": 0.002 } },
+    { "id": "consumables", "chance": 0.12, "entries": [
+      { "item": "item.potion.hp_small", "weight": 70, "count": [1, 3] },
+      { "item": "item.potion.mp_small", "weight": 30, "count": [1, 2] } ] }
+  ],
+  "pity": { "group": "gear", "guarantee_after": 400 }
+}

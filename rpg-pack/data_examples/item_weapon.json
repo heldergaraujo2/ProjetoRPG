@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "item.weapon.sword_iron_01",
+  "category": "weapon",
+  "subtype": "sword_1h",
+  "name_key": "item.weapon.sword_iron_01.name",
+  "desc_key": "item.weapon.sword_iron_01.desc",
+  "level_req": 12,
+  "req": { "str": 40, "agi": 20 },
+  "classes": ["guerreiro", "lamina_arcana"],
+  "damage": { "min": 14, "max": 22 },
+  "attack_speed": 1.0,
+  "durability": 40,
+  "slots": 2,
+  "grid": { "w": 1, "h": 3 },
+  "bind": "none",
+  "refinable": true,
+  "options_allowed": ["extra_damage", "luck", "skill"],
+  "excellent_pool": "pool.weapon.melee",
+  "price": { "buy": 3500, "sell": 900 },
+  "visual": { "model": "asset.model.sword_iron_01", "icon": "asset.icon.sword_iron_01", "material": "asset.mat.iron" },
+  "tags": ["starter_tier2"]
+}

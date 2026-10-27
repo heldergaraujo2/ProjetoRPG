@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "recipe.fortress_pass",
+  "station": "fusion_machine",
+  "inputs": [
+    { "item": "item.event.scroll_piece", "min_level": 1, "count": 1 },
+    { "item": "item.event.bone_piece", "min_level": 1, "count": 1, "must_match_level_with": "item.event.scroll_piece" },
+    { "item": "item.gem.fusion", "count": 1 }
+  ],
+  "cost_zen": 100000,
+  "success_chance": 1.0,
+  "on_fail": "destroy_inputs",
+  "output": { "item": "item.event.fortress_pass", "level_from_input": "item.event.scroll_piece" }
+}

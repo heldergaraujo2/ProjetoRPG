@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "npc.town01.blacksmith",
+  "name_key": "npc.town01.blacksmith.name",
+  "map": "map.town_01",
+  "position": [102.5, 0, 88.0],
+  "role": ["shop", "repair", "refine_service"],
+  "shop": "shop.town01.blacksmith",
+  "dialogue": "dialogue.town01.blacksmith.main",
+  "quests_offered": ["quest.town01.wolf_pelts"],
+  "visual": { "model": "asset.model.npc_blacksmith", "idle": "asset.anim.hammering" }
+}

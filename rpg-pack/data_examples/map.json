@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "map.forest_01",
+  "name_key": "map.forest_01.name",
+  "size": [2048, 2048],
+  "chunk_size": 128,
+  "recommended_level": [5, 25],
+  "rules": { "pvp": "pk_rules", "flying": false, "mount": true, "death_penalty": "normal" },
+  "files": { "heightmap": "height.r16", "walkmesh": "walk.nav", "chunks": "chunks/", "objects": "objects.json" },
+  "player_respawn": ["spawn.town_01"],
+  "portals": [
+    { "id": "portal.to_town", "pos": [30, 0, 40], "radius": 2, "to_map": "map.town_01", "to_point": "spawn.from_forest", "level_min": 1 }
+  ],
+  "spawns": [
+    { "monster": "monster.forest.wolf_gray", "area": { "center": [400, 0, 520], "radius": 60 }, "count": 14, "respawn_seconds": 30 }
+  ],
+  "weather": { "default": "clear", "cycle": "day_night_default" },
+  "music": "asset.music.forest_theme"
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "max_hit_pct_of_target_hp": 0.35,
+  "level_diff_cap": 15,
+  "gear_diminishing": { "refine_soft_cap": 9, "factor_above_cap": 0.5 },
+  "control_resist": { "window_seconds": 15, "duration_mult_per_hit": [1.0, 0.5, 0.25, 0.0], "immunity_after_seconds": 3 },
+  "pk": {
+    "self_defense_seconds": 30,
+    "states": [
+      { "id": "normal", "kills": 0 },
+      { "id": "aggressor", "kills": 1, "name_color": "#E6B800", "shop_lock_minutes": 10, "xp_loss_mult": 1.25 },
+      { "id": "assassin", "kills": 3, "name_color": "#D32F2F", "shop_lock_minutes": 60, "xp_loss_mult": 2.0, "equip_drop_chance": 0.03, "town_guards_hostile": true }
+    ],
+    "decay_minutes_per_kill": 60,
+    "pay_to_clear_zen_per_kill": 500000,
+    "newbie_protection_level": 20
+  },
+  "ranked": { "normalized_level": 100, "elo_k": 24, "season_days": 60 }
+}
