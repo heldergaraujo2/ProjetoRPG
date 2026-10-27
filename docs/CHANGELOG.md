@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-27 — Download Windows e validação de publicação
+
+- Confirmado workspace limpo em HEAD `4ba8a0a`, branch publicada e PR #1 apontando para o mesmo commit antes desta atualização.
+- Versionado `docs/WINDOWS_SETUP.md` com clone Git da branch, comandos WinGet para Node/.NET/Godot, restore/build/testes, inventário de dependências e limitações; README e checkpoint apontam para o guia.
+- Revalidada a ausência de submódulos/Git LFS e de dependências Arena; assets de referência e lockfile estão versionados.
+- Builds do cliente/servidor permanecem não executados por falta de toolchain no sandbox.
+
 ## 2026-10-27 — Compatibilidade e bloqueio de toolchain (Fase 0 pendente)
 
 - Inspecionados os pins e TFM reais: client `net8.0`/Godot.NET.Sdk 4.7.2, shared `net8.0`, server e smoke `net10.0`, SDK 10.0.402 em `global.json`.

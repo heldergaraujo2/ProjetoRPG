@@ -3,7 +3,7 @@
 **Atualizado:** 2026-10-27
 **Fase oficial atual:** 0 — Preparação
 **Estado:** Em andamento. Scaffold Godot/.NET e scripts de validação foram criados nesta branch, mas compilações/testes de destino estão bloqueados pela indisponibilidade das toolchains; não declarar Fase 0 concluída nem avançar oficialmente para Fase 1.
-**Branch ativa:** `arena/b2f4e6da-projetorpg` (HEAD/base `40e8badd43ca28c17662944824a3c25335e22182`; não trocada).
+**Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
 
 ## Causa confirmada da divergência
@@ -16,7 +16,7 @@
 ## Fontes e documentos reconciliados
 
 - `rpg-pack/` foi importado de `origin/main` como fonte documental oficial; `rpg-pack/CHECKPOINT.md` foi marcado como histórico.
-- `README.md`, `docs/02_ARQUITETURA.md`, `docs/adr/ADR-001-stack.md`, `docs/CHANGELOG.md` e este checkpoint foram atualizados para distinguir planejamento, implementação e evidência.
+- `README.md`, `docs/02_ARQUITETURA.md`, `docs/adr/ADR-001-stack.md`, `docs/WINDOWS_SETUP.md`, `docs/CHANGELOG.md` e este checkpoint foram atualizados para distinguir planejamento, implementação e evidência; o guia Windows contém clone, instalação, restore, execução e testes.
 - Stack-alvo: Godot `4.7.2-stable` .NET / `Godot.NET.Sdk/4.7.2` com client/shared `net8.0` (targets oficiais GodotSharp/GodotTools); servidor ASP.NET Core/SDK+TFM `.NET 10.0.402` / `net10.0`; PostgreSQL produção, SQLite desenvolvimento e WebSocket/TCP inicial. Requer Godot Mono e SDK .NET 10.0.402. A documentação oficial Godot 4.7 diz que Godot traz runtime para rodar jogos e exige SDK .NET separado; 4.5+ permite SDK 8 ou posterior. Não é necessário instalar runtime 8 separado; o client `net8.0` requer targeting pack 8 no build (restore primeiro; SDK 8 oficial somente se necessário). O servidor usa runtime 10 do SDK. Integração permanece **sem build real**; fontes na ADR.
 - O README, arquitetura, ADR e readmes preexistentes de client/server/infra foram recuperados de blobs Git inacessíveis e preservados em `docs/archive/`. Como existem snapshots próximos diferentes, não é possível garantir que sejam byte a byte a última versão não commitada do working tree; ver `docs/archive/RECOVERY.md`.
 
@@ -91,6 +91,16 @@ npm run test:target
 O servidor de desenvolvimento pode ser iniciado com `dotnet run --project server/ProjetoRpg.Server.csproj`. Para Godot, abrir projeto `client/` na distribuição 4.7.2 .NET. `npm run doctor` é apenas diagnóstico; `npm run check` só valida Node legado e sintaxe JS.
 
 ## Procedimento Windows caso o sandbox continue bloqueado
+
+O guia completo versionado está em [`docs/WINDOWS_SETUP.md`](docs/WINDOWS_SETUP.md). Comandos diretos para clonar a branch publicada e instalar Node, SDK e Godot via WinGet:
+
+```powershell
+git clone --branch arena/b2f4e6da-projetorpg --single-branch https://github.com/heldergaraujo2/ProjetoRPG.git ProjetoRPG
+Set-Location .\ProjetoRPG
+winget install --id OpenJS.NodeJS.22 --exact --version 22.22.3
+winget install --id Microsoft.DotNet.SDK.10 --exact --version 10.0.402
+winget install --id GodotEngine.GodotEngine.Mono --exact --version 4.7.2
+```
 
 A rede permitida neste executor não alcança os hosts binários Microsoft/GitHub Releases. Os manifestos WinGet foram consultados sem baixar binários; eles verificam SHA-256 e apontam para fontes oficiais:
 
