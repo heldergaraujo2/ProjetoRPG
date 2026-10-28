@@ -195,7 +195,7 @@ Os avisos `MODULE_TYPELESS_PACKAGE_JSON` dos scripts JavaScript foram não bloqu
 
 ### Limites após Fase 0 e status atualizado para Fase 1
 
-A confirmação Windows da Fase 0 cobre build/smoke inicial, não banco. A implementação desta sessão adiciona código de contas, hash, sessões, personagens, PostgreSQL, migration e audit log, mas ainda não foi compilada/testada. SQLite continua sem provider. Também não estão demonstrados mundo simulado, movimentação multiplayer, combate, inventário, economia ou gameplay completo.
+Snapshot histórico anterior à validação da Fase 1 no Windows: a confirmação inicial da Fase 0 cobria build/smoke, não banco. Depois, contas, hash, sessões, personagens, PostgreSQL, migrations e audit log foram compilados e testados conforme a seção **Validação operacional atual** no topo. SQLite continua sem provider. Também não estão demonstrados mundo simulado, movimentação multiplayer, combate, inventário, economia ou gameplay completo.
 
 ### Próximo objetivo — Fase 1: validação e endurecimento
 
