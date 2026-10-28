@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-28 — Implementação parcial da Fase 1 (builds PostgreSQL ainda bloqueados)
+
+- Sincronizado o workspace com o HEAD remoto inicial `99ab3d742427c04043109304ae0b87622b9f3769`; o stash/backup pré-sync preserva a cópia antiga. Não houve force-push.
+- Commits de implementação: `74784ee75fa8a5f8ba56a7f8d930d9db2d7e907e` (`feat(server): add PostgreSQL account and character foundation`) e `04efa0e18d744ccfc0567e606470338906613297` (runner Docker ignora connection string de migration herdada, mantendo o teste restrito ao banco efêmero). Adicionado Npgsql `10.0.0` (fonte oficial confirma TFMs net8/net9/net10), config obrigatória por environment, JSON logging, respostas seguras, rate limiting e health live/database/ready.
+- Criadas migrações SQL com constraints/FKs/índices/checksums, runner transacional com advisory lock, status e rollback explicitamente destrutivo; nenhuma migration automática no boot.
+- Adicionados registro/login usando ASP.NET Core Identity PasswordHasher, token aleatório persistindo somente SHA-256, expiração/revogação, respostas de login genéricas, personagens por owner sem classe fictícia e audit events sem credenciais.
+- `npm run test:phase1` cria PostgreSQL descartável para teste integrado de migração/config/banco/auth/sessão/ownership/restart/audit/catalog/WebSocket. `npm run load:parked` prepara 100 WebSockets ociosos, sem reivindicar gameplay ou capacidade real.
+- `npm ci`: passou. `npm run check`: passou, 4/4 testes Node. Parse estático JSON/XML e `git diff --check`: passaram.
+- `npm run doctor`: status 1; .NET/Godot/PostgreSQL/Docker ausentes no sandbox. `npm run test:phase1`: bloqueado antes da execução pelo SDK .NET ausente. Nenhum build C#, restore Npgsql, teste PostgreSQL ou load test foi executado; `server/packages.lock.json` ainda precisa ser produzido/confirmado após restore no Windows.
+- Fase 1 segue EM ANDAMENTO; os smoke tests Fase 0 de Windows permanecem confirmados pelo usuário e não foram repetidos.
+
 ## 2026-10-28 — Builds limpos e testes de destino aprovados (Fase 0 concluída)
 
 - Toolchain Windows validada: Node.js 22.23.4, .NET SDK 10.0.403 e Godot 4.7.2 stable Mono.

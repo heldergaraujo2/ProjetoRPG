@@ -383,6 +383,8 @@ O `CHECKPOINT.md` existente define a sequência de 15 fases abaixo. Preserve seu
 
 **Aceite:** servidor inicia de forma reproduzível; banco e migrações funcionam; testes básicos passam; entradas inválidas são tratadas.
 
+**Incremento atual (parcial, não aceite de fase):** PostgreSQL/Npgsql, migration inicial versionada, config validada por ambiente, readiness/liveness, registro/login com PasswordHasher do ASP.NET Core, sessões bearer com expiração/revogação, personagens vinculados à conta, audit log e runner de integração descartável foram adicionados. A lista real de classes está vazia; personagens podem permanecer sem classe, e nenhum gameplay é simulado. Ver `server/README.md` e `CHECKPOINT.md`. `npm run test:phase1` é o teste automatizado do banco real (Docker/PostgreSQL) e ainda precisa ser executado em ambiente com SDK .NET 10 e Docker.
+
 ### Fase 2 — Cliente base e login
 
 **Objetivo:** conectar o cliente ao servidor e habilitar acesso de conta.

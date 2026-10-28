@@ -2,9 +2,20 @@
 
 **Atualizado:** 2026-10-28
 **Fase oficial atual:** 1 — Fundação do servidor
-**Estado:** Fase 0 concluída em 2026-10-28 após builds limpos e testes reais de Shared, servidor e cliente no Windows. Próximo objetivo oficial: Fase 1 — Fundação do servidor, ainda incompleta.
+**Estado:** Fase 0 concluída em 2026-10-28 conforme builds/smokes Windows confirmados pelo usuário. Fase 1 — Fundação do servidor — EM ANDAMENTO: persistência/auth parcial adicionada, mas ainda sem build ou teste de PostgreSQL nesta sessão.
 **Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
+
+## Retomada segura e estado atual da Fase 1 — 2026-10-28
+
+- **Base remota confirmada antes da implementação:** `99ab3d742427c04043109304ae0b87622b9f3769`, branch `arena/b2f4e6da-projetorpg`, PR #1 aberta. Essa base descendia do workspace antigo `40e8badd43ca28c17662944824a3c25335e22182`.
+- Auditoria do working tree antigo: README modificado localmente já era byte-idêntico ao remoto; 85 arquivos locais não rastreados também eram idênticos; divergiam somente CHECKPOINT, CHANGELOG e smoke Godot, todos mais antigos. Nenhum arquivo local exclusivo foi encontrado. O estado anterior completo foi preservado em stash `pre-sync workspace snapshot 2026-10-28 before 99ab3d7` e `/home/user/ProjetoRPG-pre-sync-20261028.tar.gz`; atualização foi fast-forward, sem force-push/reset destrutivo. Esse backup não está no repositório.
+- Commits da implementação desta atualização: `74784ee75fa8a5f8ba56a7f8d930d9db2d7e907e` (`feat(server): add PostgreSQL account and character foundation`) e `04efa0e18d744ccfc0567e606470338906613297` (isolamento do runner contra connection string de migração herdada). Adicionado provider PostgreSQL Npgsql `10.0.0`; source oficial da tag v10 confirma TFMs net8.0/net9.0/net10.0. Client/shared permanecem net8.0; server permanece net10.0. `RestorePackagesWithLockFile` está ligado, mas `server/packages.lock.json` não pôde ser criado sem .NET SDK e deve ser validado/publicado depois do restore.
+- Implementados em código (ainda NÃO compilados/testados nesta sessão): config env obrigatória/validação, TLS do PostgreSQL verificado em Production, migration runner transacional/checksum/advisory lock e rollback com confirmação, PostgreSQL accounts/sessions/characters/audit, PasswordHasher ASP.NET Identity, bearer token aleatório armazenado somente como SHA-256, expiração/revogação, autorização por `account_id`, readiness/database/live e validação reforçada de IDs/path traversal no catálogo.
+- Personagem é persistido sem classe atribuída porque `content/manifest.json` não contém classes reais. `classId` só funciona quando houver classe real no catálogo; não adicionar uma classe de mentira. Não há gameplay implementado.
+- **Validação desta sessão:** `npm ci` passou; `npm run check` passou (4/4 testes Node); `npm run doctor` status 1 por falta de .NET/Godot/Postgres/Docker; `npm run test:phase1` status 2 (`PHASE1_TEST_BLOCKED: .NET SDK is unavailable`); `git diff --check` e parse estático JSON/XML passaram. Builds .NET, restore NuGet, integração PostgreSQL, migração, auth, banco indisponível e load test permanecem NÃO EXECUTADOS.
+- Runner automatizado `npm run test:phase1` usa PostgreSQL Docker efêmero, migrações reversíveis, configuração, health, auth/sessões, autorização/persistência após restart, audit e catálogo. `npm run load:parked` prepara 100 conexões WebSocket ociosas; não autentica nem simula gameplay e ainda não foi executado.
+- **Próximo passo exato:** em Windows com SDK `10.0.403` (roll-forward `latestPatch`) e Docker Desktop, rodar `dotnet build server\ProjetoRpg.Server.csproj`, revisar/versionar `server/packages.lock.json` gerado, depois `npm run test:phase1`; corrigir todas as falhas reais e repetir. Em seguida iniciar server/db local e executar `PROJETORPG_LOAD_CLIENTS=100` / 60 s via `npm run load:parked`. Registrar saída real antes de declarar qualquer critério/fase concluído.
 
 ## Causa confirmada da divergência
 
@@ -38,9 +49,9 @@
 
 ### Não implementado / não comprovado
 
-- Contas, registro/login, hash de senha, sessões autenticadas, personagens, persistência, PostgreSQL/SQLite, migrações e audit log.
+- Implementação parcial de contas/registro/login/hash/sessões/personagens/PostgreSQL/migration/audit foi adicionada, mas ainda não foi compilada/testada; SQLite não foi implementado.
 - Simulação de mundo: o serviço 20 Hz atual só conta ticks e emite métrica; não atualiza atores/movimento nem prova precisão de deadline.
-- Bots/carga 0/100, movimentação autorizada, navegação/pathfinding, colisão, sincronização, combate, loot, inventário, economia, atributos, teleporte, quests ou interações.
+- Teste de carga 0/100 ainda não executado (há script WebSocket ocioso); movimentação autorizada, navegação/pathfinding, colisão, sincronização, combate, loot, inventário, economia, atributos, teleporte, quests ou interações não estão implementados.
 - O cliente não implementa input. Mantêm-se os requisitos: clique esquerdo é o único input de movimento; clique direito solicita ataque validado pelo servidor; W/A/S/D/Espaço não são gameplay; I/P/M são atalhos de UI; atributos canônicos Fúria, Defesa, Mana, Agilidade e Sabedoria. Não foram encontrados/introduzidos sistemas paralelos FOR/AGI/VIT/ENE/CMD.
 
 ## Matriz oficial da Fase 0
@@ -54,9 +65,9 @@
 - [x] Conferir os builds reais e registrar as evidências de execução no checkpoint.
 - [x] Concluir a Fase 0 após os builds e testes iniciais passarem; Fase 1 permanece incompleta.
 
-## Trabalho seguro iniciado em direção à Fase 1
+## Trabalho seguro iniciado em direção à Fase 1 — snapshot anterior à implementação atual
 
-Implementado apenas o esqueleto de serialização/versionamento, handshake/ping, clock de 20 Hz, métricas básicas e recusa de conteúdo inválido no startup. Os testes de destino cobrem endpoints, medição da taxa média do clock numa janela de 1 s, ping-pong, versão incompatível e manifest inválido; foram executados com sucesso no Windows em 2026-10-28, conforme a seção de validação local abaixo. Autenticação/hash, banco, migrations, contas/personagens, catálogos de gameplay, audit log, teste com 100 bots e aceite completo da Fase 1 permanecem pendentes. Isso é progresso parcial, não Fase 1 concluída.
+Na confirmação dos smokes iniciais de 2026-10-28, o código possuía somente serialização/versionamento, handshake/ping, clock de 20 Hz, métricas e recusa de conteúdo inválido. Esse snapshot comprovou Fase 0, não persistência. Desde então, a seção **Retomada segura e estado atual da Fase 1** no topo registra o código parcial de DB/auth/personagens/audit criado e os testes ainda bloqueados. Catálogos de gameplay, teste de 100 conexões executado e aceite completo da Fase 1 permanecem pendentes.
 
 ## Testes e comandos — resultados históricos do sandbox Linux (2026-10-27)
 
@@ -131,13 +142,13 @@ npm run test:target
 
 O `global.json` exige SDK `10.0.402` ou patch compatível da banda `10.0.4xx`; `godot --version` deve mostrar 4.7.2 e `mono`. Se WinGet não estiver instalado, utilize as URLs/checksums oficiais nos manifestos [Microsoft .NET SDK 10.0.402](https://github.com/microsoft/winget-pkgs/blob/master/manifests/m/Microsoft/DotNet/SDK/10/10.0.402/Microsoft.DotNet.SDK.10.installer.yaml) e [Godot Mono 4.7.2](https://github.com/microsoft/winget-pkgs/blob/master/manifests/g/GodotEngine/GodotEngine/Mono/4.7.2/GodotEngine.GodotEngine.Mono.installer.yaml); mantenha a verificação de hash/TLS habilitada.
 
-## Próximo passo exato
+## Próximo passo exato — registro histórico revisado em 2026-10-28
 
-Os builds limpos de Shared, Server e Client e os testes de destino foram executados com sucesso no Windows em 2026-10-28. Não é necessário reinstalar as toolchains nem repetir os testes iniciais já aprovados.
+Os builds limpos de Shared, Server e Client e os testes de destino foram confirmados pelo usuário no Windows em 2026-10-28; não é necessário repeti-los para esta mudança. A lista de tarefas de Fase 1 abaixo foi parcialmente iniciada nesta sessão; o estado atual e o próximo passo executável estão na seção **Retomada segura e estado atual da Fase 1** no início deste checkpoint.
 
-O próximo objetivo é a Fase 1 — Fundação do servidor: implementar acesso real ao banco, esquema e migrações versionadas, contas e sessões, persistência e testes correspondentes. Acompanhar também a validação do catálogo, o audit log e os testes de carga conforme os critérios de aceite do README. Não declarar a Fase 1 concluída antes de cumprir esses critérios. PostgreSQL/SQLite e gameplay completo ainda não estão comprovados.
+Persistência PostgreSQL, migrations, registro/login, sessões, ownership de personagem, audit log e runner de teste real foram adicionados ao código, mas não validados por build devido à falta de SDK .NET/Docker neste sandbox. PostgreSQL/SQLite e gameplay completos não devem ser declarados concluídos.
 
-**Branch:** `arena/b2f4e6da-projetorpg` (ativa). **Commit de scaffold:** `def86f0`; branch publicada em `origin/arena/b2f4e6da-projetorpg`. **PR aberto:** [#1 — ProjetoRPG: add Godot/.NET scaffold and validation](https://github.com/heldergaraujo2/ProjetoRPG/pull/1). **Fase 0:** concluída em 2026-10-28. **Fase 1:** próximo objetivo, ainda incompleto.
+**Branch:** `arena/b2f4e6da-projetorpg`. **Commit de scaffold:** `def86f0`; PR #1 permanece aberta contra `main`. A implementação será publicada com a limitação de validação explícita; builds, restore e integração PostgreSQL continuam pendentes e a Fase 1 não está concluída.
 
 ## Validação local confirmada — 2026-10-28
 
@@ -168,10 +179,10 @@ Ambiente Windows do usuário. Esta seção atualiza o estado operacional anterio
 
 Os avisos `MODULE_TYPELESS_PACKAGE_JSON` dos scripts JavaScript foram não bloqueantes. O relógio do servidor mede pulsos; não representa simulação de mundo. A cena Bootstrap confirma inicialização, não gameplay.
 
-### Limites que permanecem
+### Limites após Fase 0 e status atualizado para Fase 1
 
-Não foi demonstrada a implementação de contas, registro/login, hash de senhas, sessões autenticadas, personagens persistentes, PostgreSQL/SQLite, migrações ou audit log. Também não estão demonstrados mundo simulado, movimentação multiplayer, combate, inventário, economia ou gameplay completo.
+A confirmação Windows da Fase 0 cobre build/smoke inicial, não banco. A implementação desta sessão adiciona código de contas, hash, sessões, personagens, PostgreSQL, migration e audit log, mas ainda não foi compilada/testada. SQLite continua sem provider. Também não estão demonstrados mundo simulado, movimentação multiplayer, combate, inventário, economia ou gameplay completo.
 
-### Próximo objetivo — Fase 1: Fundação do servidor
+### Próximo objetivo — Fase 1: validação e endurecimento
 
-Implementar configuração e logging robustos, acesso real ao banco, esquema e migrações versionadas, contas/sessões e testes de persistência. Não marcar a Fase 1 como concluída até cumprir os critérios de aceite do README.
+Gerar e versionar `server/packages.lock.json` com restore real; compilar o server; executar `npm run test:phase1` com Docker/PostgreSQL; corrigir falhas; então executar o teste separado de 100 conexões ociosas. Depois implementar/revisar grants mínimos de DB, rate limiting distribuído conforme necessidade, revogação em massa/rotação quando o produto exigir, retenção de audit, backup/restore e documentação de operação. Não marcar Fase 1 concluída até cobrir integralmente os critérios do README.

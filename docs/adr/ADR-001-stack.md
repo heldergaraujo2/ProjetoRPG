@@ -1,13 +1,13 @@
 # ADR-001 — Stack e fronteiras do ProjetoRPG
 
-- **Estado:** Aceita como alvo; build de compatibilidade pendente.
+- **Estado:** Aceita; builds iniciais Windows da Fase 0 confirmados em 2026-10-28. A nova persistência/autenticação da Fase 1 ainda aguarda build/testes de integração.
 - **Data:** 2026-10-27.
 - **Contexto de origem:** `rpg-pack/02_ARQUITETURA.md` propunha Godot 4 C#, .NET 8, PostgreSQL, SQLite local e TCP + UDP confiável (com WebSocket como alternativa inicial); a Fase 0 do `rpg-pack/08_FASES.md` manda confirmar a proposta.
 - **Relacionado:** [`../02_ARQUITETURA.md`](../02_ARQUITETURA.md), [`../../README.md`](../../README.md), [`../../CHECKPOINT.md`](../../CHECKPOINT.md).
 
-## Contexto da divergência de repositório
+## Contexto da divergência de repositório — auditoria histórica de 2026-10-27
 
-A branch ativa `arena/b2f4e6da-projetorpg` estava no commit inicial `40e8bad`; sua referência `origin/main` estava desatualizada em `3941e64`. Após `git fetch origin main` (sem checkout ou merge), foi encontrado `origin/main` commit `9ac6d53`, com README e pacote `rpg-pack` oficial, mas sem projetos/código Godot/.NET. Esses documentos foram importados para o working tree. Não existe evidência no Git de um projeto que o PC do usuário tenha compilado; a afirmação de testes externos não veio acompanhada de logs ou artifacts.
+A branch ativa `arena/b2f4e6da-projetorpg` estava então no commit inicial `40e8bad`; sua referência `origin/main` estava desatualizada em `3941e64`. Após `git fetch origin main` (sem checkout ou merge), foi encontrado `origin/main` commit `9ac6d53`, com README e pacote `rpg-pack` oficial, mas sem projetos/código Godot/.NET. Esses documentos foram importados para o working tree. Naquele ponto não havia logs/artifacts locais dos testes reportados no PC. Em 2026-10-28 o usuário confirmou os builds/smokes Windows da Fase 0; CHECKPOINT.md registra essa evidência reportada e separa-a dos novos testes de Fase 1 ainda não executados.
 
 ## Opções consideradas
 
@@ -25,7 +25,7 @@ A branch ativa `arena/b2f4e6da-projetorpg` estava no commit inicial `40e8bad`; s
 - Catálogos JSON versionados em `content/`; schemas/validação no startup do servidor.
 - Preservar `server.js`, `public/` e `test/` como protótipo de referência durante a migração, sem tratá-los como implementação final.
 
-A lista oficial do GitHub API reportou release Godot `4.7.2-stable` com build `mono_linux_x86_64` de 107,698,034 bytes e .NET SDK `10.0.402`. O código-fonte oficial da tag 4.7.2 declara `GodotSharp` e `GodotTools` com target `net8.0` e declara o pacote `Godot.NET.Sdk` como `4.7.2`; por isso o client/shared usam net8.0. O backend fica em net10.0 por ciclo de suporte. A documentação oficial da linha 4.7 diz que Godot inclui o runtime necessário para executar jogos compilados, mas não o compilador/MSBuild; exige Godot .NET e .NET SDK, e Godot 4.5+ aceita SDK .NET 8 ou posterior. Assim, **não é necessário instalar runtime .NET 8 separado para executar editor/jogo**. O SDK .NET 10.0.402 satisfaz a versão mínima documentada e inclui runtime 10 para o servidor; o build do client ainda precisa resolver o targeting/reference pack `net8.0` (por restore do SDK ou instalação oficial do SDK 8 somente se necessário). A compatibilidade cruzada está **pendente de build real**. Fontes primárias: [pré-requisitos C# da documentação Godot 4.7](https://github.com/godotengine/godot-docs/blob/4.7/tutorials/scripting/c_sharp/c_sharp_basics.rst), [GodotSharp.csproj na tag 4.7.2-stable](https://github.com/godotengine/godot/blob/4.7.2-stable/modules/mono/glue/GodotSharp/GodotSharp/GodotSharp.csproj), [GodotTools.csproj](https://github.com/godotengine/godot/blob/4.7.2-stable/modules/mono/editor/GodotTools/GodotTools.csproj) e [Godot.NET.Sdk.csproj](https://github.com/godotengine/godot/blob/4.7.2-stable/modules/mono/editor/Godot.NET.Sdk/Godot.NET.Sdk.csproj).
+A lista oficial do GitHub API reportou release Godot `4.7.2-stable` com build `mono_linux_x86_64` de 107,698,034 bytes e .NET SDK `10.0.402`. O código-fonte oficial da tag 4.7.2 declara `GodotSharp` e `GodotTools` com target `net8.0` e declara o pacote `Godot.NET.Sdk` como `4.7.2`; por isso o client/shared usam net8.0. O backend fica em net10.0 por ciclo de suporte. A documentação oficial da linha 4.7 diz que Godot inclui o runtime necessário para executar jogos compilados, mas não o compilador/MSBuild; exige Godot .NET e .NET SDK, e Godot 4.5+ aceita SDK .NET 8 ou posterior. Assim, **não é necessário instalar runtime .NET 8 separado para executar editor/jogo**. O SDK .NET 10.0.402 satisfaz a versão mínima documentada e inclui runtime 10 para o servidor; o build do client resolve o targeting/reference pack `net8.0` via restore (SDK 8 oficial somente se necessário). Os builds iniciais da stack cruzada foram confirmados pelo usuário no Windows em 2026-10-28; os novos arquivos de persistência/auth da Fase 1 ainda aguardam build e integração PostgreSQL. Fontes primárias: [pré-requisitos C# da documentação Godot 4.7](https://github.com/godotengine/godot-docs/blob/4.7/tutorials/scripting/c_sharp/c_sharp_basics.rst), [GodotSharp.csproj na tag 4.7.2-stable](https://github.com/godotengine/godot/blob/4.7.2-stable/modules/mono/glue/GodotSharp/GodotSharp/GodotSharp.csproj), [GodotTools.csproj](https://github.com/godotengine/godot/blob/4.7.2-stable/modules/mono/editor/GodotTools/GodotTools.csproj) e [Godot.NET.Sdk.csproj](https://github.com/godotengine/godot/blob/4.7.2-stable/modules/mono/editor/Godot.NET.Sdk/Godot.NET.Sdk.csproj).
 
 ## Consequências
 
@@ -48,3 +48,10 @@ A lista oficial do GitHub API reportou release Godot `4.7.2-stable` com build `m
 3. Rodar smoke do servidor por HTTP/WebSocket e boot da cena cliente headless.
 4. Adicionar testes com SQLite e PostgreSQL quando os providers/serviços forem configurados.
 5. Se .NET 10 não for aceito pelo Godot .NET 4.7.2, não alterar em silêncio: avaliar a menor alternativa ainda suportada em novo ADR.
+
+## Aditivo de implementação — Fase 1 (2026-10-28)
+
+- O servidor começa com **PostgreSQL apenas**, por Npgsql `10.0.0`; SQLite permanece uma possibilidade arquitetural não implementada e não é alegado como provider compatível. Desenvolvimento/teste usa PostgreSQL local ou um container descartável.
+- A release oficial Npgsql `v10.0.0` (`https://github.com/npgsql/npgsql/releases/tag/v10.0.0`) declara TFM `net8.0;net9.0;net10.0` em `src/Npgsql/Npgsql.csproj`; isso confirma compatibilidade de pacote com o TFM server `net10.0` sem alterar o stack Godot/client/shared. Package reference está fixada em `10.0.0`; NuGet lockfile ainda precisa ser gerado após restore real.
+- Migrações explícitas e transacionais são aplicadas com `--db-migrate`, não automaticamente no boot. `--db-rollback` exige confirmação explícita pois a migration `down` inicial apaga dados. Produção separa runtime connection/read-only schema health da conexão de migração com DDL e exige TLS validado.
+- Este aditivo descreve código criado, não resultado validado: a compilação/restore e integração PostgreSQL desta implementação não foram executadas no sandbox, sem SDK .NET/Docker.

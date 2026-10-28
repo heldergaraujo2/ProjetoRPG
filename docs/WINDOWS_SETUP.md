@@ -1,6 +1,6 @@
 # Windows — clonar, instalar e validar
 
-Este guia configura o **scaffold atual** para download e testes. Não declara Fase 0 concluída nem transforma a cena Bootstrap/clock em gameplay. O código de cliente/servidor ainda não foi compilado no CI ou neste sandbox porque as toolchains não estavam instaladas.
+Este guia configura o **scaffold e a implementação parcial de Fase 1** para download e validação. A Fase 0 foi confirmada pelo usuário no Windows (builds e smokes registrados em `CHECKPOINT.md`). As alterações de Fase 1 descritas neste branch ainda precisam de build e integração PostgreSQL reais; a cena Bootstrap/clock não é gameplay e a Fase 1 não está concluída.
 
 ## 1. Clonar a branch publicada
 
@@ -103,6 +103,51 @@ A cena Bootstrap é somente confirmação de boot; ainda não há login, movimen
 
 > `npm start` inicia o protótipo legado Node/Canvas em `http://localhost:3000`; não é o cliente Godot nem o servidor ASP.NET Core. `npm run check` valida esse protótipo e a sintaxe dos scripts, não os builds Godot/.NET.
 
-## 6. Banco e limitações atuais
+## 6. PostgreSQL e validação de Fase 1
 
-A arquitetura prevê PostgreSQL em produção e SQLite em desenvolvimento, mas ainda não existem providers, migrations, schema de contas/personagens ou serviços de persistência. Não instale/configure banco para validar a Fase 0 e não interprete a ausência de testes de banco como teste aprovado. Essa integração deve entrar na Fase 1, depois dos builds iniciais, com testes reais para cada banco.
+O servidor usa PostgreSQL via Npgsql `10.0.0`; SQLite ainda não tem provider/schema e permanece pendente. A Fase 1 cria migration versionada, contas/sessões, personagens persistentes, audit log e endpoints de saúde. A implementação ainda não foi compilada/testada neste sandbox; consulte `CHECKPOINT.md` para o resultado exato desta missão.
+
+Para build/restore do servidor:
+
+```powershell
+dotnet build server\ProjetoRpg.Server.csproj
+```
+
+`RestorePackagesWithLockFile` está habilitado para gerar `server\packages.lock.json` no restore. Como o SDK .NET não está instalado neste executor, o lock NuGet não pôde ser gerado/validado aqui; revise e versione esse arquivo após o primeiro restore Windows bem-sucedido.
+
+O teste de integração completo cria PostgreSQL descartável e requer Docker Desktop/Engine ativo:
+
+```powershell
+npm ci
+npm run check
+npm run test:phase1
+```
+
+`npm run test:target:server` é um alias compatível para o mesmo teste. `npm run test:target` inclui o servidor/DB e, portanto, também requer Docker além do SDK e Godot Mono. O teste registra a versão e image ID resolvida do `postgres:18-alpine`; `PROJETORPG_TEST_POSTGRES_IMAGE` pode fixar tag/digest para uma execução reproduzível. Nenhum volume de dados é criado, e não se deve apontar o runner para dados de jogadores.
+
+Para executar manualmente, defina `ConnectionStrings__GameDatabase` no ambiente PowerShell, confira estado e aplique a migration antes de iniciar:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+$env:ConnectionStrings__GameDatabase = 'Host=127.0.0.1;Port=5432;Database=projetorpg;Username=<usuario-local>;Password=<senha-local>;Ssl Mode=Disable'
+dotnet run --project server\ProjetoRpg.Server.csproj -- --db-status
+dotnet run --project server\ProjetoRpg.Server.csproj -- --db-migrate
+dotnet run --project server\ProjetoRpg.Server.csproj
+```
+
+Não salve a connection string ou senha em arquivos commitados. Production exige TLS com validação de certificado e uma conexão de migração separada (`ConnectionStrings__MigrationDatabase`) com privilégio DDL; o servidor usa usuário runtime limitado. `--db-rollback --confirm-data-loss` remove tabelas/dados da migration inicial: somente em banco descartável ou após backup restaurável confirmado.
+
+`/health/live` mede o processo; `/health/database` executa consulta real; `/health/ready` exige banco e schema atualizado. O catálogo atual não oferece classes: personagens novos permanecem sem classe até haver conteúdo real. Não existe jogo jogável, nem SQLite, nem migração validada por execução ainda.
+
+### Teste de 100 conexões WebSocket ociosas (manual, separado)
+
+Com servidor iniciado, migration aplicada e PostgreSQL disponível:
+
+```powershell
+$env:PROJETORPG_LOAD_URL = 'http://127.0.0.1:5050'
+$env:PROJETORPG_LOAD_CLIENTS = '100'
+$env:PROJETORPG_LOAD_DURATION_SECONDS = '60'
+npm run load:parked
+```
+
+Isso mantém 100 conexões de protocolo sem autenticação/gameplay e não é resultado de teste executado nem prova de capacidade de produção.

@@ -6,9 +6,7 @@
 
 ## Reconciliação do checkout
 
-A branch Arena continua `arena/b2f4e6da-projetorpg`, no commit-base `40e8badd43ca28c17662944824a3c25335e22182`; a primeira referência local de `origin/main` estava em `3941e64`. A auditoria executou `git fetch origin main` para atualizar somente a referência. O `origin/main` encontrado, `9ac6d53ecf58cca77fa05295583123bb7ac0f000`, contém README, especificação e `rpg-pack/`, mas não continha `project.godot`, `.csproj`, `.sln` nem implementação Godot/.NET. A inspeção das branches remotas também não revelou outra branch publicada com esses projetos. Nenhum checkout, merge ou troca da branch Arena ocorreu.
-
-Assim, existem duas questões distintas: (1) a branch estava desatualizada em relação aos documentos publicados em `main`; (2) nem essa referência `main` tinha o scaffold Godot/.NET que o usuário relata ter executado no próprio PC. Não é possível atribuir uma causa histórica adicional sem o commit/log/artifact daquele PC. O checkpoint oficial importado informava Fase 0 não iniciada e não trazia resultados de teste. A divergência não demonstra que os testes externos falharam; somente não os comprova.
+Na auditoria inicial de 2026-10-27, a branch Arena estava no commit-base `40e8badd43ca28c17662944824a3c25335e22182`; naquela ocasião, a referência `origin/main` encontrada era `9ac6d53ecf58cca77fa05295583123bb7ac0f000` e não continha scaffold Godot/.NET. Esse relato é histórico, não o estado atual. Na retomada de 2026-10-28, o workspace foi comparado e atualizado por fast-forward até o HEAD remoto `99ab3d742427c04043109304ae0b87622b9f3769`, preservando divergências antigas em backup/stash. A implementação parcial desta Fase 1 está no commit local `74784ee75fa8a5f8ba56a7f8d930d9db2d7e907e`; confira o checkpoint para estado de publicação e validação.
 
 Os documentos locais anteriores que foram substituídos foram recuperados de blobs Git inacessíveis e arquivados em [`archive/`](archive/RECOVERY.md). Não é possível provar que cada blob correspondia byte a byte à última versão não commitada do working tree.
 
@@ -47,25 +45,24 @@ Clique esquerdo continuará sendo o único comando de movimento com navegação/
 - Password hashing reconhecido, rate limits e respostas sem enumeração de conta.
 - Queries parametrizadas, privilégios mínimos e nenhum segredo em Git/logs.
 - Validar tipo, faixas, tamanho, posse, frequência e estado antes de mutação.
-- O scaffold não possui contas, hash de senha, PostgreSQL, SQLite, migrations, rate limiting ou autorização de jogo. Sua resposta `health/tick` deixa explícito que `persistenceConfigured=false`.
+- O scaffold da primeira publicação não possuía contas, hash, banco, migrations, rate limiting ou autorização; a implementação parcial de Fase 1 agora usa PostgreSQL/Npgsql, hash ASP.NET Identity, sessões opacas, persistência/autorização básica de personagem e audit log. SQLite segue sem provider. `/health/live` é independente do banco; `/health/database` consulta `SELECT 1`; `/health/ready` exige conexão e migration atual. A resposta `health/tick` informa apenas `databaseConnectionConfigured`, não comprova DB saudável.
 
 ## Ferramentas e evidência disponível
 
-No sandbox remoto, Node `v22.22.3`/npm `10.9.8` estão disponíveis, mas não `godot`, `godot4`, `dotnet`, `psql`, `postgres` ou Docker; APT sem índices locais. A auditoria de rede confirmou que o endpoint de release Godot no GitHub retorna 302 para `objects.githubusercontent.com` (fora do allowlist); a API de assets também redireciona para `release-assets.githubusercontent.com`, igualmente fora do allowlist. Downloads Microsoft em `dotnetcli.azureedge.net`, `builds.dotnet.microsoft.com` e `packages.microsoft.com` falham TLS com `curl` 35 / `SSL_ERROR_SYSCALL`; sem contornar TLS, não há rota oficial de binário acessível neste sandbox. Nenhum runtime/SDK foi instalado e nenhum build alvo pode ser declarado. Fontes não oficiais não serão usadas.
+No sandbox remoto, Node `v22.22.3`/npm `10.9.8` estão disponíveis, mas não `godot`, `godot4`, `dotnet`, `psql`, `postgres` ou Docker; APT sem índices locais. Downloads oficiais binários falharam por allowlist/TLS sem qualquer bypass. Isso bloqueia builds/testes da **implementação de Fase 1 desta sessão**. Separadamente, o usuário confirmou os builds Shared/Server/Client e smoke tests da Fase 0 em Windows em 2026-10-28; essa evidência está registrada no checkpoint e não foi repetida nesta sessão. Fontes não oficiais não serão usadas.
 
 Com toolchains instaladas localmente, a sequência reproduzível a partir da raiz é:
 
-```bash
+```powershell
 npm ci
 npm run check                       # protótipo Node + sintaxe dos scripts
 npm run doctor                      # diagnóstico de toolchain (não é build)
-dotnet --info
-dotnet run --project tests/Shared.Smoke/Shared.Smoke.csproj
-npm run test:target:server           # build e integração real do ASP.NET Core
-npm run test:target:client           # import/build e boot headless no Godot .NET
-npm run test:target                  # todos os testes de destino em sequência
+dotnet build server\ProjetoRpg.Server.csproj
+npm run test:phase1                 # Docker/PostgreSQL descartável + auth/schema/persistência
+npm run test:target:client          # import/build e boot headless no Godot .NET
+npm run test:target                 # shared + server/PostgreSQL + client
 ```
 
-Para iniciar o servidor de desenvolvimento: `dotnet run --project server/ProjetoRpg.Server.csproj`. O cliente abre com Godot 4.7.2 Mono, projeto `client/`. No Windows, a instalação reprodutível é `winget install --id Microsoft.DotNet.SDK.10 --exact --version 10.0.402` e `winget install --id GodotEngine.GodotEngine.Mono --exact --version 4.7.2`. Godot Mono contém o runtime para executar o jogo; não requer runtime 8 separado. O client usa TFM `net8.0`, então o restore precisa resolver `Godot.NET.Sdk/4.7.2`, `GodotSharp` e o targeting pack 8; só se o restore indicar que o targeting pack não está disponível, instalar `winget install --id Microsoft.DotNet.SDK.8 --exact --version 8.0.427`.
+O servidor exige `ConnectionStrings__GameDatabase`, valida a configuração e não aplica migrations no boot. Execute `dotnet run --project server/ProjetoRpg.Server.csproj -- --db-status`, depois `-- --db-migrate`, e então inicie o app. `/health/live` mede processo, `/health/database` faz `SELECT 1` e `/health/ready` exige schema atualizado. Com Godot 4.7.2 Mono e SDK .NET 10.0.402 disponíveis, o client `net8.0` pode requerer targeting pack 8; tente restore antes de instalar SDK 8 oficial. Godot Mono contém o runtime do jogo.
 
-O teste automatizado server inclui o aceite de **recusar startup com manifest de schema desconhecido**. Ainda não há teste de 100 bots, registro/login/personagens, integração de banco, movimento/combat, navegação ou MMORPG multiplayer. O script de integração calcula a taxa média observada numa janela de 1 s e exige 15–25 ticks/s como margem de smoke; ainda não foi executado neste ambiente, portanto não há taxa medida. Isso não demonstra deadline por tick nem world simulation. A Fase 0 permanece incompleta até build/testes de ambos os lados em toolchain real e demais critérios do checkpoint serem comprovados.
+A implementação parcial inclui Npgsql/PostgreSQL, uma migration inicial reversível com confirmação explícita, registro/login via `PasswordHasher<TUser>`, sessões opacas com expiração/hash/revogação, personagens sem classe atribuída enquanto o catálogo real está vazio, ownership, audit log e smoke completo em container. Esses builds/testes da Fase 1 **não foram executados nesta sessão**: o sandbox não tem .NET SDK nem Docker. `npm run load:parked` prepara 100 conexões WebSocket ociosas por 60 s, mas não foi executado e não representa usuários autenticados nem gameplay. Fase 0 está concluída conforme testes Windows confirmados pelo usuário; Fase 1 continua em andamento e incompleta.
