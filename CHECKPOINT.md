@@ -1,8 +1,8 @@
 # CHECKPOINT — continuidade do ProjetoRPG
 
-**Atualizado:** 2026-10-27
-**Fase oficial atual:** 0 — Preparação
-**Estado:** Em andamento. Scaffold Godot/.NET e scripts de validação foram criados nesta branch, mas compilações/testes de destino estão bloqueados pela indisponibilidade das toolchains; não declarar Fase 0 concluída nem avançar oficialmente para Fase 1.
+**Atualizado:** 2026-10-28
+**Fase oficial atual:** 1 — Fundação do servidor
+**Estado:** Fase 0 concluída em 2026-10-28 após builds limpos e testes reais de Shared, servidor e cliente no Windows. Próximo objetivo oficial: Fase 1 — Fundação do servidor, ainda incompleta.
 **Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
 
@@ -28,7 +28,7 @@
 - Dados e testes de protótipo em `public/data/` e `test/`; pacote npm com `ws`.
 - Referências visuais preexistentes, não convertidas em assets de produção.
 
-### Scaffold criado nesta etapa — sem build comprovado
+### Scaffold criado nesta etapa — builds e smoke tests confirmados
 
 - `global.json`, `ProjetoRpg.sln`, `shared/ProjetoRpg.Shared.csproj`, contratos JSON/versionamento e `tests/Shared.Smoke/`.
 - `server/ProjetoRpg.Server.csproj`: ASP.NET Core, endpoints live/tick/content, catálogo JSON validado no startup, loop-clock que conta pulsos a 20 Hz, métricas counter/histogram e WebSocket `Hello`/`HelloAck` + `Ping`/`Pong`, com validação simples de versão e sequence.
@@ -49,16 +49,16 @@
 - [x] Estruturar diretórios alvo, solução/projetos, content/schema e scripts locais de build/teste.
 - [x] Criar runner local `scripts/check-target-stack.sh` para executar verificações em sequência.
 - [x] Criar arquivos mínimos de cliente Godot C# e servidor ASP.NET Core.
-- [ ] Compilar limpo cliente e servidor com versões instaladas e compatíveis.
-- [ ] Executar smoke real da cena Godot e integração HTTP/WebSocket do servidor.
-- [ ] Conferir erros reais do compilador, restaurar SDKs oficiais e deixar evidências de saída no checkpoint.
-- [ ] Só concluir Fase 0 após builds e testes de cada lado passarem; até lá, não avançar formalmente.
+- [x] Compilar limpo cliente e servidor com versões instaladas e compatíveis.
+- [x] Executar smoke da cena Godot e integração HTTP/WebSocket do servidor.
+- [x] Conferir os builds reais e registrar as evidências de execução no checkpoint.
+- [x] Concluir a Fase 0 após os builds e testes iniciais passarem; Fase 1 permanece incompleta.
 
 ## Trabalho seguro iniciado em direção à Fase 1
 
-Implementado apenas o esqueleto de serialização/versionamento, handshake/ping, clock de 20 Hz, métricas básicas e recusa de conteúdo inválido no startup. O código de teste tenta cobrir endpoints, medir a taxa média do clock numa janela de 1 s, ping-pong, versão incompatível e manifest inválido, mas não foi executado por falta do SDK. Autenticação/hash, banco, migrations, contas/personagens, catálogos de gameplay, audit log, teste com 100 bots e aceite completo da Fase 1 permanecem pendentes. Isso é progresso parcial, não Fase 1 concluída.
+Implementado apenas o esqueleto de serialização/versionamento, handshake/ping, clock de 20 Hz, métricas básicas e recusa de conteúdo inválido no startup. O código de teste tenta cobrir endpoints, medir a taxa média do clock numa janela de 1 s, ping-pong, versão incompatível e manifest inválido, e foi executado com sucesso no Windows em 2026-10-28, conforme a seção de validação local abaixo. Autenticação/hash, banco, migrations, contas/personagens, catálogos de gameplay, audit log, teste com 100 bots e aceite completo da Fase 1 permanecem pendentes. Isso é progresso parcial, não Fase 1 concluída.
 
-## Testes e comandos — resultados desta sessão
+## Testes e comandos — resultados históricos do sandbox Linux (2026-10-27)
 
 Executado a partir da raiz `/home/user/ProjetoRPG`:
 
@@ -133,6 +133,45 @@ O `global.json` exige SDK `10.0.402` ou patch compatível da banda `10.0.4xx`; `
 
 ## Próximo passo exato
 
-Provisionar Godot Mono 4.7.2 e .NET SDK 10.0.402 (ou patch compatível em 10.0.4xx), restaurar/compilar shared e servidor, executar o smoke de protocolo, integração HTTP/WebSocket com medição da taxa média do clock e o import/build/boot do cliente Godot. Se o restore do client não resolver o targeting pack `net8.0`, instalar SDK 8 oficial conforme o procedimento acima. Guardar saídas completas, corrigir erros reais e repetir os testes. Fase 0 continua incompleta até os builds e testes de cada lado passarem. Depois de comprovada, completar fundação da Fase 1 (persistência, migrações, contas/personagens reais, validação de catálogo e audit log e carga 0/100 bots parados) antes de avançar para Fase 2. SQLite/PostgreSQL não têm provider/serviços; integração e testes permanecem pendentes.
+Os builds limpos de Shared, Server e Client e os testes de destino foram executados com sucesso no Windows em 2026-10-28. Não é necessário reinstalar as toolchains nem repetir os testes iniciais já aprovados.
 
-**Branch:** `arena/b2f4e6da-projetorpg` (ativa). **Commit de scaffold:** `def86f0`; branch publicada em `origin/arena/b2f4e6da-projetorpg`. **PR aberto:** [#1 — ProjetoRPG: add Godot/.NET scaffold and validation](https://github.com/heldergaraujo2/ProjetoRPG/pull/1). Nenhuma compilação ou fase foi declarada concluída.
+O próximo objetivo é a Fase 1 — Fundação do servidor: implementar acesso real ao banco, esquema e migrações versionadas, contas e sessões, persistência e testes correspondentes. Acompanhar também a validação do catálogo, o audit log e os testes de carga conforme os critérios de aceite do README. Não declarar a Fase 1 concluída antes de cumprir esses critérios. PostgreSQL/SQLite e gameplay completo ainda não estão comprovados.
+
+**Branch:** `arena/b2f4e6da-projetorpg` (ativa). **Commit de scaffold:** `def86f0`; branch publicada em `origin/arena/b2f4e6da-projetorpg`. **PR aberto:** [#1 — ProjetoRPG: add Godot/.NET scaffold and validation](https://github.com/heldergaraujo2/ProjetoRPG/pull/1). **Fase 0:** concluída em 2026-10-28. **Fase 1:** próximo objetivo, ainda incompleto.
+
+## Validação local confirmada — 2026-10-28
+
+Ambiente Windows do usuário. Esta seção atualiza o estado operacional anterior, que refletia as limitações de toolchain do sandbox Linux em 2026-10-27.
+
+### Ferramentas identificadas
+
+- Node.js 22.23.4.
+- .NET SDK 10.0.403, respeitando o `global.json` com roll-forward `latestPatch`.
+- Godot 4.7.2 stable Mono.
+- O script de smoke do cliente foi executado apontando `GODOT_BIN` para o executável console do Godot instalado localmente.
+
+### Builds limpos
+
+- `dotnet clean` de Shared, Server e Client: sucesso.
+- `dotnet restore` dos três projetos: sucesso.
+- `dotnet build shared/ProjetoRpg.Shared.csproj --no-restore`: sucesso, target `net8.0`.
+- `dotnet build server/ProjetoRpg.Server.csproj --no-restore`: sucesso, target `net10.0`.
+- `dotnet build client/ProjetoRpg.Client.csproj --no-restore`: sucesso, target `net8.0`.
+- `npm run check`: sintaxe JavaScript aprovada e 4/4 testes do protótipo Node aprovados.
+
+### Testes de destino
+
+- `npm run test:target:shared`: `SHARED_PROTOCOL_SMOKE_OK`.
+- `npm run test:target:server`: `SERVER_INTEGRATION_OK`; endpoint ativo, relógio medido em 19,90 Hz nesta execução, validação de catálogo, handshake/ping WebSocket, rejeição de versão incompatível e recusa de catálogo inválido.
+- `npm run test:target:client`: `GODOT_CLIENT_SMOKE_OK`; importação/build headless e inicialização da cena Bootstrap.
+- `npm run test:target`: os três testes de destino passaram na mesma execução.
+
+Os avisos `MODULE_TYPELESS_PACKAGE_JSON` dos scripts JavaScript foram não bloqueantes. O relógio do servidor mede pulsos; não representa simulação de mundo. A cena Bootstrap confirma inicialização, não gameplay.
+
+### Limites que permanecem
+
+Não foi demonstrada a implementação de contas, registro/login, hash de senhas, sessões autenticadas, personagens persistentes, PostgreSQL/SQLite, migrações ou audit log. Também não estão demonstrados mundo simulado, movimentação multiplayer, combate, inventário, economia ou gameplay completo.
+
+### Próximo objetivo — Fase 1: Fundação do servidor
+
+Implementar configuração e logging robustos, acesso real ao banco, esquema e migrações versionadas, contas/sessões e testes de persistência. Não marcar a Fase 1 como concluída até cumprir os critérios de aceite do README.
