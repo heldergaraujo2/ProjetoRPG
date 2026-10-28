@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const clientPath = path.join(root, 'client');
-const candidates = process.platform === 'win32' ? ['godot', 'godot4'] : ['godot', 'godot4'];
+const candidates = process.env.GODOT_BIN ? [process.env.GODOT_BIN, 'godot', 'godot4'] : ['godot', 'godot4'];
 let executable;
 let versionResult;
 for (const candidate of candidates) {
