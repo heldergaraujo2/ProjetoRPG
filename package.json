@@ -8,10 +8,12 @@
     "start": "node server.js",
     "dev": "node server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check public/app.js && node --check scripts/check-toolchain.js && node --check scripts/target-server-smoke.js && node --check scripts/target-godot-smoke.js && npm test",
+    "check": "node --check server.js && node --check public/app.js && node --check scripts/check-toolchain.js && node --check scripts/target-server-smoke.js && node --check scripts/phase1-integration.js && node --check scripts/load-parked-clients.js && node --check scripts/target-godot-smoke.js && npm test",
     "doctor": "node scripts/check-toolchain.js",
     "test:target:shared": "dotnet run --project tests/Shared.Smoke/Shared.Smoke.csproj",
     "test:target:server": "node scripts/target-server-smoke.js",
+    "test:phase1": "node scripts/phase1-integration.js",
+    "load:parked": "node scripts/load-parked-clients.js",
     "test:target:client": "node scripts/target-godot-smoke.js",
     "test:target": "npm run test:target:shared && npm run test:target:server && npm run test:target:client"
   },

@@ -8,6 +8,7 @@ public sealed record ContentEntry(string Id, string Kind, string RelativePath);
 public sealed class ContentCatalog
 {
     private static readonly Regex StableId = new("^[a-z0-9]+(?:[._][a-z0-9]+)*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex StableKind = new("^[a-z][a-z0-9_-]{0,31}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private ContentCatalog(string version, IReadOnlyList<ContentEntry> entries, string rootDirectory)
     {
@@ -19,6 +20,9 @@ public sealed class ContentCatalog
     public string Version { get; }
     public IReadOnlyList<ContentEntry> Entries { get; }
     public string RootDirectory { get; }
+    public bool ContainsClass(string classId) => Entries.Any(entry =>
+        entry.Kind.Equals("class", StringComparison.OrdinalIgnoreCase) &&
+        entry.Id.Equals(classId, StringComparison.Ordinal));
 
     public static ContentCatalog Load(string directory)
     {
@@ -54,6 +58,8 @@ public sealed class ContentCatalog
 
             if (!StableId.IsMatch(id))
                 throw new InvalidDataException($"Invalid stable content id: {id}");
+            if (!StableKind.IsMatch(kind))
+                throw new InvalidDataException($"Invalid content kind: {kind}");
             if (!ids.Add(id))
                 throw new InvalidDataException($"Duplicate content id: {id}");
             if (Path.IsPathRooted(relativePath))
@@ -63,17 +69,37 @@ public sealed class ContentCatalog
             var rootPrefix = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
             if (!fullPath.StartsWith(rootPrefix, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
                 throw new InvalidDataException($"Content path escapes the catalog directory: {relativePath}");
+            EnsureNoSymbolicLinks(root, relativePath);
             if (!File.Exists(fullPath))
                 throw new InvalidDataException($"Content file does not exist for {id}: {relativePath}");
 
             using var contentDocument = JsonDocument.Parse(File.ReadAllBytes(fullPath), new JsonDocumentOptions { MaxDepth = 64 });
-            if (contentDocument.RootElement.ValueKind != JsonValueKind.Object)
-                throw new InvalidDataException($"Content file must contain a JSON object: {relativePath}");
+            if (contentDocument.RootElement.ValueKind != JsonValueKind.Object ||
+                !contentDocument.RootElement.TryGetProperty("id", out var contentId) ||
+                contentId.ValueKind != JsonValueKind.String ||
+                !string.Equals(contentId.GetString(), id, StringComparison.Ordinal))
+                throw new InvalidDataException($"Content file id must match manifest id {id}: {relativePath}");
 
             entries.Add(new ContentEntry(id, kind, relativePath));
         }
 
         return new ContentCatalog(versionElement.GetString()!, entries, root);
+    }
+
+    private static void EnsureNoSymbolicLinks(string root, string relativePath)
+    {
+        var current = root;
+        foreach (var segment in relativePath.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries))
+        {
+            current = Path.Combine(current, segment);
+            try
+            {
+                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                    throw new InvalidDataException($"Content paths must not traverse symbolic links: {relativePath}");
+            }
+            catch (FileNotFoundException) { }
+            catch (DirectoryNotFoundException) { }
+        }
     }
 
     private static bool TryString(JsonElement element, string property, out string value)
