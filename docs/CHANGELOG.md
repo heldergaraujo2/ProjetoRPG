@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-28 — Builds limpos e testes de destino aprovados (Fase 0 concluída)
+
+- Toolchain Windows validada: Node.js 22.23.4, .NET SDK 10.0.403 e Godot 4.7.2 stable Mono.
+- Limpeza, restore e builds de Shared (`net8.0`), Server (`net10.0`) e Client (`net8.0`) concluídos com sucesso.
+- `npm run check`: sintaxe aprovada e 4/4 testes Node aprovados.
+- `npm run test:target`: Shared, integração HTTP/WebSocket do servidor e import/build/boot headless do cliente Godot passaram.
+- Avisos `MODULE_TYPELESS_PACKAGE_JSON` foram não bloqueantes. A medição de clock não equivale a simulação do mundo; o boot da cena não equivale a gameplay.
+- Fase 0 concluída conforme os critérios de preparação e testes iniciais do README. Fase 1 é o próximo objetivo e continua incompleta: banco, migrações, autenticação e persistência ainda precisam ser implementados.
+
 ## 2026-10-27 — Download Windows e validação de publicação
 
 - Confirmado workspace limpo em HEAD `4ba8a0a`, branch publicada e PR #1 apontando para o mesmo commit antes desta atualização.
