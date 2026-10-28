@@ -116,7 +116,7 @@ async function waitForPostgres(containerName, username, databaseName) {
 }
 
 function psql(containerName, username, databaseName, sql) {
-  const result = spawnSync('docker', ['exec', containerName, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-U', username, '-d', databaseName, '-At', '-c', sql],
+  const result = spawnSync('docker', ['exec', containerName, 'psql', '-X', '-q', '-v', 'ON_ERROR_STOP=1', '-U', username, '-d', databaseName, '-At', '-c', sql],
     { cwd: root, encoding: 'utf8', timeout: 15000 });
   if (result.status !== 0) throw new Error(`Disposable database assertion failed (exit ${result.status ?? 'unknown'}); SQL/output withheld to avoid leaking generated test credentials.`);
   return result.stdout.trim();
@@ -386,7 +386,7 @@ try {
   const accountId = psql(containerName, databaseUser, databaseName,
     `SELECT account_id::text FROM accounts WHERE username_normalized = '${username.toUpperCase()}'`);
   const expiryUpdate = psql(containerName, databaseUser, databaseName,
-    `UPDATE account_sessions SET expires_at = now() - interval '1 second' WHERE token_hash = decode('${sessionHashHex}', 'hex') RETURNING account_id::text`);
+    `UPDATE account_sessions SET created_at = now() - interval '2 seconds', expires_at = now() - interval '1 second' WHERE token_hash = decode('${sessionHashHex}', 'hex') RETURNING account_id::text`);
   requireCondition(expiryUpdate === accountId, 'Could not set the first test session to expired.');
   expectStatus(await jsonRequest(`${baseUrl}/api/v1/characters`, 'GET', undefined, session.accessToken), 401, 'expired session');
 
