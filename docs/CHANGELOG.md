@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-28 — Tentativa de validação da demo no executor Linux
+
+- Confirmado working tree pré-existente na branch `arena/b2f4e6da-projetorpg`, HEAD `766b316ff550e4f630877705e695b0de5307e127`, com alterações tracked/untracked e nada staged; nenhum arquivo foi descartado e nenhuma operação Git de gravação foi feita.
+- O executor é Linux, sem acesso a `/mnt/c`/`/mnt/d`; Node/npm são `v22.22.3`/`10.9.8`, mas `godot`, `godot4`, `dotnet` e OpenCode não são resolvidos. `dotnet --version` retornou shell 127. `npm run doctor` retornou 1, reportando Godot Mono, .NET SDK/runtime 10, PostgreSQL/psql e Docker ausentes.
+- Executado `npm run test:target:client`: **código 2**, `TARGET_TEST_BLOCKED: Godot 4 .NET executable is unavailable...`. A leitura do smoke confirmou que o teste para antes de import/build e não modifica o projeto. Nenhum erro de cena ou de C# foi observado porque esses passos não rodaram.
+- O checkpoint histórico registra Godot 4.7.2 Mono, .NET SDK 10.0.403 e Node 22.23.4 no Windows do usuário, mas não foi possível acessar/reverificar o Windows nem confirmar o caminho real do executável nesta missão. Editor/F6 e validação visual continuam pendentes; nenhum MCP foi instalado ou habilitado.
+- Pós-tentativa, `npm run check` passou com `npm test` 14/14 e `git diff --check` passou. Os avisos ESM `MODULE_TYPELESS_PACKAGE_JSON` foram não bloqueantes.
+
 ## 2026-10-28 — Validação Windows da fundação PostgreSQL (Fase 1 em andamento)
 
 - Confirmados no Windows `npm run check` (4/4 testes Node), `npm run test:target`, build do servidor .NET e `npm run test:phase1` com PostgreSQL descartável.

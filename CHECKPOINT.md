@@ -2,9 +2,20 @@
 
 **Atualizado:** 2026-10-28
 **Fase oficial atual:** 1 — Fundação do servidor
-**Estado:** Fase 0 concluída. Fase 1 implementada parcialmente; build do servidor, restore em locked-mode e testes de integração PostgreSQL confirmados no Windows em 2026-10-28. Fase 1 permanece EM ANDAMENTO, pendente da revisão integral dos critérios e do teste de carga separado.
+**Estado:** Fase 0 concluída. Fase 1 implementada parcialmente; build do servidor, restore em locked-mode e testes de integração PostgreSQL confirmados no Windows em 2026-10-28. Fase 1 permanece EM ANDAMENTO, pendente da revisão integral dos critérios e do teste de carga separado. A demo 3D isolada usa assets CC0 verificados; nesta retomada, `npm run test:target:client` ficou bloqueado no executor Linux (código 2, Godot ausente). Import/build e inspeção visual continuam pendentes, sem alterar o estado oficial das Fases 2/3.
 **Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
+
+## Tentativa de validação e estado do executor — 2026-10-28
+
+- Reconfirmei branch `arena/b2f4e6da-projetorpg`, HEAD `766b316ff550e4f630877705e695b0de5307e127`; working tree já continha alterações locais rastreadas e arquivos novos (incluindo atividade de carga anterior), sem arquivos staged. Nenhum estado foi descartado; não houve stage/commit/push/merge/reset/troca de branch.
+- O executor é Linux x86_64, não Windows. Não existem mounts `/mnt/c` ou `/mnt/d`; `GODOT_BIN` está unset e `command -v` não encontra `godot`, `godot4`, `dotnet` ou `opencode`. Node/npm locais: `v22.22.3` / `10.9.8`. `dotnet --version` não encontrou comando (código shell 127).
+- `npm run test:target:client` foi realmente executado; retorno do script **2**, com `TARGET_TEST_BLOCKED: Godot 4 .NET executable is unavailable. Install the official matching Mono build and rerun npm run test:target:client.` Inspecionei o runner: sem Godot ele termina antes de importar/buildar ou escrever no projeto. A falha é ausência da ferramenta neste executor, não um erro confirmado da cena/C#; nenhum código foi mudado em resposta.
+- `npm run doctor` retornou **1** e reportou Godot Mono, .NET SDK e runtime .NET 10 ausentes; PostgreSQL/psql e Docker também ausentes. Essa execução confirma o estado deste executor, não do Windows.
+- O checkpoint histórico da validação do usuário registra Windows com Godot `4.7.2 stable Mono`, SDK `.NET 10.0.403` e Node `22.23.4`; não tenho acesso a esse Windows nesta sessão e não verifiquei novamente executável, caminho ou versão. Não apresentar esse registro histórico como confirmação atual.
+- Não foi possível executar o smoke de import/build/Bootstrap, abrir o editor, rodar F6 ou inspecionar modelo/textura/câmera/movimento/animações/escala/orientação. A demonstração segue sem validação visual.
+- Após atualizar a documentação: `npm run check` passou (sintaxe JS + `npm test`, **14/14**), e `git diff --check` passou. Permanecem os avisos Node não bloqueantes `MODULE_TYPELESS_PACKAGE_JSON` nos dois testes ESM. Esses testes não substituem o smoke Godot bloqueado acima.
+- **Próximo passo exato:** no Windows acessível, verificar caminho e `--version` do binário Mono, `dotnet --list-sdks` e Node/npm; executar `npm run test:target:client`, abrir `client` e rodar `CharacterDemo.tscn` com F6. Registrar saídas e resultados visuais; corrigir somente falhas reproduzidas.
 
 ## Validação operacional atual — 2026-10-28
 
