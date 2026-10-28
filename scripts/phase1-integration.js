@@ -206,6 +206,9 @@ try {
   if (imageInspect.status === 0) postgresImageId = imageInspect.stdout.trim();
   const connectionString = `Host=127.0.0.1;Port=${dbPort};Database=${databaseName};Username=${databaseUser};Password=${databasePassword};Ssl Mode=Disable;Timeout=2;Command Timeout=5`;
   const dbEnv = { ...process.env, ConnectionStrings__GameDatabase: connectionString, ASPNETCORE_ENVIRONMENT: 'Development' };
+  delete dbEnv.ConnectionStrings__MigrationDatabase;
+  delete dbEnv['ConnectionStrings:MigrationDatabase'];
+  delete dbEnv.GAME_CONTENT_DIRECTORY;
 
   const invalidConfigurationEnv = { ...process.env };
   delete invalidConfigurationEnv.ConnectionStrings__GameDatabase;
