@@ -148,7 +148,7 @@ Os builds limpos de Shared, Server e Client e os testes de destino foram confirm
 
 Persistência PostgreSQL, migrations, registro/login, sessões, ownership de personagem, audit log e runner de teste real foram adicionados ao código, mas não validados por build devido à falta de SDK .NET/Docker neste sandbox. PostgreSQL/SQLite e gameplay completos não devem ser declarados concluídos.
 
-**Branch:** `arena/b2f4e6da-projetorpg`. **Commit de scaffold:** `def86f0`; PR #1 permanece aberta contra `main`. A implementação será publicada com a limitação de validação explícita; builds, restore e integração PostgreSQL continuam pendentes e a Fase 1 não está concluída.
+**Branch:** `arena/b2f4e6da-projetorpg`. **Commit de scaffold:** `def86f0`; PR #1 permanece aberta contra `main`. A implementação foi publicada nesta branch com a limitação de validação explícita; builds, restore e integração PostgreSQL continuam pendentes e a Fase 1 não está concluída.
 
 ## Validação local confirmada — 2026-10-28
 
