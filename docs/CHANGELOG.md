@@ -1,6 +1,17 @@
 # Changelog
 
-## 2026-10-28 — Implementação parcial da Fase 1 (builds PostgreSQL ainda bloqueados)
+## 2026-10-28 — Validação Windows da fundação PostgreSQL (Fase 1 em andamento)
+
+- Confirmados no Windows `npm run check` (4/4 testes Node), `npm run test:target`, build do servidor .NET e `npm run test:phase1` com PostgreSQL descartável.
+- Corrigido o runner de integração: `psql -q` mantém a saída do valor retornado limpa; o teste de expiração ajusta `created_at` e `expires_at` respeitando a constraint da tabela.
+- Adicionado `server/packages.lock.json`, com Npgsql `10.0.0` e referência ao projeto compartilhado. `dotnet restore server\\ProjetoRpg.Server.csproj --locked-mode` passou.
+- Os avisos Node `MODULE_TYPELESS_PACKAGE_JSON` e conversão LF/CRLF pelo Git foram não bloqueantes.
+- Fase 1 permanece EM ANDAMENTO: falta executar o teste separado de 100 WebSockets ociosos e revisar integralmente os critérios de aceitação. Esse teste não equivale a gameplay ou carga real de jogadores.
+- Commits publicados na branch `arena/b2f4e6da-projetorpg`: `e731795` (correção do runner) e `2f39387` (lockfile).
+
+> Nota histórica: a seção seguinte registra o estado inicial no sandbox Linux, antes da validação posterior no Windows.
+
+## Histórico inicial de implementação — bloqueios no sandbox Linux (2026-10-28)
 
 - Sincronizado o workspace com o HEAD remoto inicial `99ab3d742427c04043109304ae0b87622b9f3769`; o stash/backup pré-sync preserva a cópia antiga. Não houve force-push.
 - Commits de implementação: `74784ee75fa8a5f8ba56a7f8d930d9db2d7e907e` (`feat(server): add PostgreSQL account and character foundation`) e `04efa0e18d744ccfc0567e606470338906613297` (runner Docker ignora connection string de migration herdada, mantendo o teste restrito ao banco efêmero). Adicionado Npgsql `10.0.0` (fonte oficial confirma TFMs net8/net9/net10), config obrigatória por environment, JSON logging, respostas seguras, rate limiting e health live/database/ready.
