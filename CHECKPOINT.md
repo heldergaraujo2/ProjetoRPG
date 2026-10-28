@@ -11,13 +11,13 @@
 1. A branch desta sessão permaneceu no commit-base `40e8bad`; a primeira referência local de `origin/main` estava em `3941e64`.
 2. `git fetch origin main` atualizou **somente a referência** para `origin/main` `9ac6d53ecf58cca77fa05295583123bb7ac0f000`. Não ocorreu checkout, merge, rebase ou mudança de branch.
 3. A árvore desse `main` continha o README e pacote oficial `rpg-pack/`, mas não tinha `project.godot`, `.csproj`, `.sln` ou implementação Godot/.NET. A busca por branches remotas também não revelou outra branch publicada com esses projetos.
-4. Logo, a causa observável é: o checkout Arena não tinha recebido a atualização documental de `main`, e a referência `main` encontrada também não continha o scaffold que o usuário diz ter testado localmente. **Não há evidência suficiente para determinar em que branch/commit estão os arquivos do PC do usuário ou o que foi exatamente testado lá.** Não se conclui que os testes externos falharam; eles seguem sem logs/versões/artifacts verificáveis nesta sessão.
+4. Na inspeção inicial, ainda não havia evidência local verificável dos testes feitos no PC. Isso foi esclarecido em 2026-10-28: o usuário confirmou no Windows os builds limpos de Shared, Server e Client e os testes `npm run check` e `npm run test:target`. Os resultados estão registrados na seção **Validação local confirmada** abaixo. A observação anterior sobre ausência de evidências descreve somente o estado da inspeção inicial e não deve ser interpretada como estado atual.
 
 ## Fontes e documentos reconciliados
 
 - `rpg-pack/` foi importado de `origin/main` como fonte documental oficial; `rpg-pack/CHECKPOINT.md` foi marcado como histórico.
 - `README.md`, `docs/02_ARQUITETURA.md`, `docs/adr/ADR-001-stack.md`, `docs/WINDOWS_SETUP.md`, `docs/CHANGELOG.md` e este checkpoint foram atualizados para distinguir planejamento, implementação e evidência; o guia Windows contém clone, instalação, restore, execução e testes.
-- Stack-alvo: Godot `4.7.2-stable` .NET / `Godot.NET.Sdk/4.7.2` com client/shared `net8.0` (targets oficiais GodotSharp/GodotTools); servidor ASP.NET Core/SDK+TFM `.NET 10.0.402` / `net10.0`; PostgreSQL produção, SQLite desenvolvimento e WebSocket/TCP inicial. Requer Godot Mono e SDK .NET 10.0.402. A documentação oficial Godot 4.7 diz que Godot traz runtime para rodar jogos e exige SDK .NET separado; 4.5+ permite SDK 8 ou posterior. Não é necessário instalar runtime 8 separado; o client `net8.0` requer targeting pack 8 no build (restore primeiro; SDK 8 oficial somente se necessário). O servidor usa runtime 10 do SDK. Integração permanece **sem build real**; fontes na ADR.
+- Stack-alvo: Godot `4.7.2-stable` .NET / `Godot.NET.Sdk/4.7.2` com client/shared `net8.0` (targets oficiais GodotSharp/GodotTools); servidor ASP.NET Core/SDK+TFM `.NET 10.0.402` / `net10.0`; PostgreSQL produção, SQLite desenvolvimento e WebSocket/TCP inicial. Requer Godot Mono e SDK .NET 10.0.402. A documentação oficial Godot 4.7 diz que Godot traz runtime para rodar jogos e exige SDK .NET separado; 4.5+ permite SDK 8 ou posterior. Não é necessário instalar runtime 8 separado; o client `net8.0` requer targeting pack 8 no build (restore primeiro; SDK 8 oficial somente se necessário). O servidor usa runtime 10 do SDK. **Validação atualizada em 2026-10-28:** os builds e testes de integração HTTP/WebSocket foram executados com sucesso no Windows, conforme a seção de validação local abaixo. As notas históricas do sandbox Linux mais adiante registram tentativas anteriores e bloqueadas naquele ambiente, não os resultados atuais.
 - O README, arquitetura, ADR e readmes preexistentes de client/server/infra foram recuperados de blobs Git inacessíveis e preservados em `docs/archive/`. Como existem snapshots próximos diferentes, não é possível garantir que sejam byte a byte a última versão não commitada do working tree; ver `docs/archive/RECOVERY.md`.
 
 ## Estado real por componente
@@ -56,7 +56,7 @@
 
 ## Trabalho seguro iniciado em direção à Fase 1
 
-Implementado apenas o esqueleto de serialização/versionamento, handshake/ping, clock de 20 Hz, métricas básicas e recusa de conteúdo inválido no startup. O código de teste tenta cobrir endpoints, medir a taxa média do clock numa janela de 1 s, ping-pong, versão incompatível e manifest inválido, e foi executado com sucesso no Windows em 2026-10-28, conforme a seção de validação local abaixo. Autenticação/hash, banco, migrations, contas/personagens, catálogos de gameplay, audit log, teste com 100 bots e aceite completo da Fase 1 permanecem pendentes. Isso é progresso parcial, não Fase 1 concluída.
+Implementado apenas o esqueleto de serialização/versionamento, handshake/ping, clock de 20 Hz, métricas básicas e recusa de conteúdo inválido no startup. Os testes de destino cobrem endpoints, medição da taxa média do clock numa janela de 1 s, ping-pong, versão incompatível e manifest inválido; foram executados com sucesso no Windows em 2026-10-28, conforme a seção de validação local abaixo. Autenticação/hash, banco, migrations, contas/personagens, catálogos de gameplay, audit log, teste com 100 bots e aceite completo da Fase 1 permanecem pendentes. Isso é progresso parcial, não Fase 1 concluída.
 
 ## Testes e comandos — resultados históricos do sandbox Linux (2026-10-27)
 
@@ -90,7 +90,7 @@ npm run test:target
 
 O servidor de desenvolvimento pode ser iniciado com `dotnet run --project server/ProjetoRpg.Server.csproj`. Para Godot, abrir projeto `client/` na distribuição 4.7.2 .NET. `npm run doctor` é apenas diagnóstico; `npm run check` só valida Node legado e sintaxe JS.
 
-## Procedimento Windows caso o sandbox continue bloqueado
+## Procedimento Windows — referência histórica de preparação
 
 O guia completo versionado está em [`docs/WINDOWS_SETUP.md`](docs/WINDOWS_SETUP.md). Comandos diretos para clonar a branch publicada e instalar Node, SDK e Godot via WinGet:
 
