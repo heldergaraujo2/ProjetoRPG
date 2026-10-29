@@ -1,5 +1,11 @@
 # Demo 3D local de personagem — estado e execução
 
+## Recuperação dos artefatos — 2026-10-29
+
+Os artefatos reais da demonstração foram recuperados do workspace e publicados no repositório: `CharacterDemo.tscn`, `CharacterActor.tscn`, scripts C# do ator/câmera, KayKit Barbarian/Mage em GLB, licença CC0 e `SOURCE.md` com origem, hashes e inventário dos clipes. Os dois GLBs contêm PNG embutido, rig de 41 joints e 76 animações cada; hashes e nomes completos são registrados no arquivo de origem/licença.
+
+O teste Node dedicado passou 3/3 e as referências estáticas das cenas resolvem. Isso não valida o importador/renderizador Godot. `npm run test:target:client` permanece bloqueado (código 2) pela ausência do executável Godot 4 .NET neste ambiente; build C#, abertura com F6 e inspeção visual não foram executados. `Bootstrap.tscn` permanece como cena principal oficial.
+
 ## Escopo
 
 Esta cena é uma demonstração isolada, fora da cena inicial `client/Scenes/Bootstrap.tscn`. O comportamento é intencionalmente local e descartável: o jogador da demo pode caminhar para o ponto indicado pelo clique esquerdo, e um NPC visualmente diferente permanece como ator de teste. A cena não envia movimento/ataques ao servidor, não altera estado persistente, não implementa navegação de jogo online, combate, IA ou progressão.

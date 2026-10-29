@@ -1,0 +1,88 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://Scripts/DemoCamera.cs" id="1_camera_script"]
+[ext_resource type="PackedScene" path="res://Scenes/CharacterActor.tscn" id="2_actor_scene"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/KayKitAdventurers/Barbarian.glb" id="3_barbarian"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/KayKitAdventurers/Mage.glb" id="4_mage"]
+
+[sub_resource type="Environment" id="Environment_demo"]
+background_mode = 1
+background_color = Color(0.055, 0.075, 0.105, 1)
+
+[sub_resource type="StandardMaterial3D" id="Arena_material"]
+albedo_color = Color(0.16, 0.2, 0.24, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="Arena_mesh"]
+material = SubResource("Arena_material")
+size = Vector3(24, 0.2, 24)
+
+[sub_resource type="BoxShape3D" id="Arena_shape"]
+size = Vector3(24, 0.2, 24)
+
+[sub_resource type="SphereMesh" id="Target_mesh"]
+radius = 0.13
+height = 0.26
+
+[sub_resource type="StandardMaterial3D" id="Target_material"]
+albedo_color = Color(0.2, 0.9, 0.53, 1)
+
+[node name="CharacterDemo" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_demo")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.72, 0.65, 0)
+shadow_enabled = true
+
+[node name="Arena" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.1, 0)
+
+[node name="Ground" type="MeshInstance3D" parent="Arena"]
+mesh = SubResource("Arena_mesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena"]
+shape = SubResource("Arena_shape")
+
+[node name="Player" parent="." instance=ExtResource("2_actor_scene")]
+position = Vector3(-3, 0, 3)
+PlayerControlled = true
+ModelScene = ExtResource("3_barbarian")
+TargetMarkerPath = NodePath("../TargetMarker")
+
+[node name="NPC" parent="." instance=ExtResource("2_actor_scene")]
+position = Vector3(3, 0, -1)
+PlayerControlled = false
+ModelScene = ExtResource("4_mage")
+TargetMarkerPath = NodePath("")
+
+[node name="NpcTag" type="Label3D" parent="NPC"]
+position = Vector3(0, 2.1, 0)
+billboard = 1
+font_size = 32
+text = "MAGE — NPC LOCAL"
+
+[node name="TargetMarker" type="Node3D" parent="."]
+visible = false
+
+[node name="MarkerMesh" type="MeshInstance3D" parent="TargetMarker"]
+mesh = SubResource("Target_mesh")
+material_override = SubResource("Target_material")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 9, 12)
+script = ExtResource("1_camera_script")
+TargetPath = NodePath("../Player")
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+
+[node name="Instructions" type="Label" parent="Overlay"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 690.0
+offset_bottom = 108.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.92, 0.96, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "DEMO 3D LOCAL — PROTÓTIPO ISOLADO\nClique esquerdo: mover | Clique direito: sem ação\nBarbarian: jogador local  •  Mage: NPC local, sem estado persistente"

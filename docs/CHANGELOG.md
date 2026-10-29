@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-29 — Recuperação e publicação da demo 3D
+
+- Recuperados e publicados os modelos KayKit Adventurers Barbarian/Mage em GLB, o `LICENSE.txt` CC0 original e `SOURCE.md` com procedência, hashes SHA-256, texturas embutidas e inventário de 76 animações por modelo.
+- Publicados `CharacterDemo.tscn`, `CharacterActor.tscn`, scripts C# do ator/câmera, README do cliente e teste estático dedicado. A demo segue local/isolada; `Bootstrap.tscn` continua sendo `run/main_scene`.
+- Testes estáticos da demo: `node --test test/godot-character-demo.test.js` passou 3/3 e as referências externas das cenas foram verificadas. `npm run check` não passou nesta VM: 6 testes passaram, 2 falharam ao carregar `ws` ausente; nenhuma dependência foi instalada. `npm run test:target:client` terminou com código 2 porque não há Godot 4 .NET no executor.
+- Importação/build C#, execução/F6 e inspeção visual continuam explicitamente pendentes. Nenhuma alteração foi feita no banco, servidor ou scripts de carga.
+
 ## 2026-10-28 — Tentativa de validação da demo no executor Linux
 
 - Confirmado working tree pré-existente na branch `arena/b2f4e6da-projetorpg`, HEAD `766b316ff550e4f630877705e695b0de5307e127`, com alterações tracked/untracked e nada staged; nenhum arquivo foi descartado e nenhuma operação Git de gravação foi feita.

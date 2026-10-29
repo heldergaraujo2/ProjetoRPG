@@ -6,6 +6,15 @@
 **Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
 
+## Recuperação e publicação da demo 3D — 2026-10-29
+
+- Após buscar `origin/arena/b2f4e6da-projetorpg`, recuperei do workspace os artefatos reais da demo: `CharacterDemo.tscn`, `CharacterActor.tscn`, `CharacterActor.cs`, `DemoCamera.cs`, dois GLBs KayKit, licença CC0, auditoria `SOURCE.md`, README do cliente e teste Node dedicado. A publicação foi preparada como continuação do branch remoto `3396fce`; arquivos locais não relacionados não foram incluídos.
+- SHA-256 conferidos: Barbarian `cefc311a0e10c7858b6141f5ada7e33268727564fb8ac1347aab97d000669cc6`; Mage `cf898585da33fab50c724d31605fb931eb2912e6d2280092141e98ca81ad507d`; licença `ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629`. O parse do cabeçalho/JSON glTF confirmou arquivos completos, rig de 41 joints, PNG embutido e 76 animações por GLB; origem, CC0 e inventário permanecem junto dos modelos em `SOURCE.md`.
+- Verificação estática confirmou que todas as referências externas das duas cenas resolvem para arquivos existentes. `project.godot` ainda aponta para `Scenes/Bootstrap.tscn`, e `Bootstrap.tscn`/script/configuração foram comparados por hash com o branch remoto sem diferença. A demo segue isolada; nenhum arquivo de banco, servidor de carga ou gameplay foi incluído.
+- `node --test test/godot-character-demo.test.js`: **3/3 passou**. `git diff --check`: passou antes desta atualização documental. `npm run check` foi tentado, mas terminou com **código 1**: 6 testes passaram e 2 não iniciaram por dependência `ws` ausente (`test/load-parked-clients.test.js` e `test/prototype-smoke.test.js`); não instalei dependências nem alterei o teste de carga.
+- `npm run test:target:client` foi reexecutado e terminou com **código 2**, `TARGET_TEST_BLOCKED: Godot 4 .NET executable is unavailable`. Não houve importação Godot, build C#, execução de cena, F6 ou inspeção visual nesta VM. Não afirmar validação de renderização ou compatibilidade prática concluída.
+- Próximo passo: em Windows com Godot 4.7.2 Mono e SDK .NET compatível, executar `npm run test:target:client`, abrir `client` no editor e rodar `Scenes/CharacterDemo.tscn` com F6; registrar import/build e avaliação visual dos modelos, câmera, escala e animações.
+
 ## Tentativa de validação e estado do executor — 2026-10-28
 
 - Reconfirmei branch `arena/b2f4e6da-projetorpg`, HEAD `766b316ff550e4f630877705e695b0de5307e127`; working tree já continha alterações locais rastreadas e arquivos novos (incluindo atividade de carga anterior), sem arquivos staged. Nenhum estado foi descartado; não houve stage/commit/push/merge/reset/troca de branch.

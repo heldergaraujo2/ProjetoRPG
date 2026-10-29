@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/CharacterActor.cs" id="1_actor_script"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/KayKitAdventurers/Barbarian.glb" id="2_default_model"]
+
+[sub_resource type="CapsuleShape3D" id="Capsule_actor"]
+radius = 0.35
+height = 1.7
+
+[node name="CharacterActor" type="CharacterBody3D"]
+script = ExtResource("1_actor_script")
+ModelScene = ExtResource("2_default_model")
+PlayerControlled = true
+WalkSpeed = 2.8
+RunSpeed = 4.2
+RunDistanceThreshold = 5.0
+VisualScale = 1.0
+TargetMarkerPath = NodePath("../TargetMarker")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.85, 0)
+shape = SubResource("Capsule_actor")
