@@ -1,3 +1,11 @@
+## 2026-10-29 — Auditoria direta do template Character Selector/Lobby
+
+- Inspecionados diretamente `CharacterSelector.tscn/.gd`, `Lobby.tscn/.gd`, cenas/scripts de personagem, `project.godot`, README e LICENSE do template.
+- Confirmado que o Character Selector é uma plataforma CSG simples com dois personagens e GDScript; depende de `GameState`, `Character`, `CharacterStats`, Theme e recursos de personagem. O Lobby é uma sala/plataforma simples com host/join ENet, seleção de mapa e dependência de `MultiplayerScene`, `NetworkState` e `GameState`.
+- Confirmado que as cenas não constituem um salão medieval pronto e não podem ser importadas sem trazer dependências transitivas extensas e sistemas de rede/estado incompatíveis com o ProjetoRPG.
+- Repositório de origem indica cerca de 826.527 KB; clone integral foi evitado. Código MIT confirmado, mas licenças de assets permanecem não verificadas.
+- Nenhum arquivo foi copiado, nenhuma configuração principal alterada e nenhum build/import/teste visual desta integração foi executado. Próximo passo: inspecionar se existe clone local sem sobrescrever; decidir por port mínimo de interação/câmera ou por outro cenário 3D com licenças de assets comprovadas.
+
 ## 2026-10-29 — Refinamento visual do lobby de personagens
 
 - Removidos os oito pilares e suas esferas luminosas do cenário de prévia, que cruzavam a silhueta e encobriam o personagem na captura enviada pelo usuário.
