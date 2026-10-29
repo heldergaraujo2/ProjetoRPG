@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-29 — Avaliação estática de candidatos a mapa 3D
+
+- Registrada comparação de quatro fontes em `docs/AVALIACAO_MAPAS_3D_2026-10-29.md`, incluindo tamanho, licenças, cenas, escala aproximada, colisões, recursos/texturas, dependências e compatibilidade declarada.
+- JDungeon3D Coast é apenas o melhor candidato preliminar; cenas não foram abertas nem executadas porque Godot 4.7.2 Mono/.NET não estão disponíveis neste executor. Slavic World Free segue sem verificação por inacessibilidade do itch.io.
+- Nenhum asset foi copiado e nenhuma cena principal/demo foi alterada. Clones temporários permanecem fora do repositório em `/tmp/ProjetoRPG-map-review.Cu1Ni7`. A integração aguarda validação real em Godot e decisão posterior.
+
 ## 2026-10-29 — Recuperação e publicação da demo 3D
 
 - Recuperados e publicados os modelos KayKit Adventurers Barbarian/Mage em GLB, o `LICENSE.txt` CC0 original e `SOURCE.md` com procedência, hashes SHA-256, texturas embutidas e inventário de 76 animações por modelo.

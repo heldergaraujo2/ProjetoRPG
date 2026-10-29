@@ -6,6 +6,15 @@
 **Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
 
+## Avaliação de mapas externos — 2026-10-29
+
+- **Pesquisa estática registrada:** comparação de Slavic World Free, JDungeon3D Coast, Godot Adventure Game e TRINITY-WAR em [`docs/AVALIACAO_MAPAS_3D_2026-10-29.md`](docs/AVALIACAO_MAPAS_3D_2026-10-29.md). Os três repositórios GitHub foram clonados fora do projeto em `/tmp/ProjetoRPG-map-review.Cu1Ni7`; nenhum asset foi copiado.
+- **Melhor candidato preliminar:** JDungeon3D Coast, por ser cenário 3D construído com construções, colisores estáticos e NavigationMesh, com MIT no repositório e no conteúdo Coast. Godot 4.7.2 Mono ainda não abriu/importou/rodou a cena; a integração permanece pendente e sem aprovação final.
+- **Limite do executor:** `godot`, `godot4` e `dotnet` não estão disponíveis. A análise confirmou estrutura/recursos por inspeção estática, não compatibilidade, renderização, walkability ou comportamento em runtime. itch.io continua inacessível, então licença/conteúdo de Slavic World Free são desconhecidos.
+- **Sem mudanças de produto:** não foram alterados Bootstrap, cenas/personagens, autenticação, servidor ou movimento; não foi criada cena demo de mapa. O mapa potencial contém sistemas de jogo de terceiros que não devem ser importados. Mantidas pendentes as validações Godot visuais do Barbarian, a carga de 100 WebSockets e as fases do roadmap.
+- **Próximo passo exato:** com Godot 4.7.2 Mono, abrir/importar e executar `res://scenes/maps/coast/Coast.tscn` em cópia temporária; se necessário, testar `CoastModel.tscn` numa cena temporária mínima. Inspecionar materiais, erros, colisões e navegação e experimentar o personagem do ProjetoRPG sem sistemas externos. Só após evidência visual/runtime decidir sobre cópia seletiva e demo isolada em `client/Assets/Worlds/JDungeon3D-Coast/`; preservar `Bootstrap.tscn` e a autoridade futura do servidor. A comparação deve ser apresentada antes de alterar assets/cenas do projeto.
+
+
 ## Cliente de conta/personagens integrado ao servidor — 2026-10-29
 
 - **Incremento real:** `Bootstrap.tscn` continua sendo a cena principal e passa a iniciar `AccountGateway` via `Bootstrap.cs`. O cliente implementa cadastro/login/lista/criação de personagem/logout via HTTP contra rotas já existentes no ASP.NET Core. Endpoint configurável por `PROJETORPG_SERVER_URL`, fallback `http://127.0.0.1:5050`; HTTP é permitido só para loopback e servidores remotos exigem HTTPS. Cadastro respeita resposta genérica 202; personagem é criado sem classe (catálogo segue vazio); a lista vem da conta autenticada e pode ser atualizada.
