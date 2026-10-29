@@ -118,16 +118,24 @@ public partial class CharacterLobby : Control
         backdrop.SetAnchorsPreset(LayoutPreset.FullRect);
         AddChild(backdrop);
 
-        var margin = new MarginContainer
+        // Keep the lobby content centered instead of stretching panels to the screen edges.
+        var center = new CenterContainer
         {
             AnchorRight = 1.0f,
             AnchorBottom = 1.0f,
-            OffsetLeft = 28,
-            OffsetTop = 20,
-            OffsetRight = -28,
-            OffsetBottom = -20
+            MouseFilter = MouseFilterEnum.Ignore
         };
-        AddChild(margin);
+        AddChild(center);
+
+        var margin = new MarginContainer
+        {
+            CustomMinimumSize = new Vector2(1280, 0),
+            OffsetLeft = 20,
+            OffsetTop = 12,
+            OffsetRight = -20,
+            OffsetBottom = -12
+        };
+        center.AddChild(margin);
         var page = new VBoxContainer();
         page.AddThemeConstantOverride("separation", 14);
         margin.AddChild(page);
@@ -229,12 +237,13 @@ public partial class CharacterLobby : Control
         var worldEnvironment = new WorldEnvironment { Environment = environment };
         _previewRoot.AddChild(worldEnvironment);
 
-        AddStageMesh(new CylinderMesh { TopRadius = 3.1f, BottomRadius = 3.25f, Height = 0.32f, RadialSegments = 64 },
-            new Vector3(0, -0.22f, 0), new Color(0.13f, 0.21f, 0.25f), metallic: 0.48f);
-        AddStageMesh(new CylinderMesh { TopRadius = 2.88f, BottomRadius = 2.88f, Height = 0.04f, RadialSegments = 64 },
+        // Compact display plinth: much narrower than the character silhouette.
+        AddStageMesh(new CylinderMesh { TopRadius = 0.52f, BottomRadius = 0.58f, Height = 0.16f, RadialSegments = 48 },
+            new Vector3(0, -0.13f, 0), new Color(0.13f, 0.21f, 0.25f), metallic: 0.48f);
+        AddStageMesh(new CylinderMesh { TopRadius = 0.43f, BottomRadius = 0.43f, Height = 0.025f, RadialSegments = 48 },
             new Vector3(0, -0.035f, 0), new Color(0.26f, 0.43f, 0.42f), metallic: 0.25f);
-        AddStageMesh(new CylinderMesh { TopRadius = 3.45f, BottomRadius = 3.45f, Height = 0.08f, RadialSegments = 64 },
-            new Vector3(0, -0.42f, 0), new Color(0.18f, 0.31f, 0.34f), metallic: 0.6f);
+        AddStageMesh(new CylinderMesh { TopRadius = 0.62f, BottomRadius = 0.62f, Height = 0.045f, RadialSegments = 48 },
+            new Vector3(0, -0.235f, 0), new Color(0.18f, 0.31f, 0.34f), metallic: 0.6f);
 
         for (var index = 0; index < 8; index++)
         {
@@ -273,13 +282,14 @@ public partial class CharacterLobby : Control
         _previewRoot.AddChild(fillLight);
         var camera = new Camera3D
         {
-            Position = new Vector3(0, 2.15f, 8.6f),
+            // Frontal, elevated and distant framing inspired by classic MMORPG character halls.
+            Position = new Vector3(0, 3.45f, 12.8f),
             Current = true,
-            Fov = 34
+            Fov = 32
         };
         // LookAt requires the node to be inside the scene tree.
         _previewRoot.AddChild(camera);
-        camera.LookAt(new Vector3(0, 1.05f, 0), Vector3.Up);
+        camera.LookAt(new Vector3(0, 1.15f, 0), Vector3.Up);
     }
 
     private void SelectCharacter(CharacterSummary character)
@@ -292,28 +302,43 @@ public partial class CharacterLobby : Control
         }
 
         var classText = string.IsNullOrWhiteSpace(character.ClassId) ? "sem classe atribuída" : $"classe {character.ClassId}";
-        _selectedDetails.Text = $"Selecionado: {character.Name}\n{classText}\nAparência não fornecida pelo servidor.";
-        ReplacePreviewFigure();
+        _selectedDetails.Text = $"Selecionado: {character.Name}\n{classText}\nPrévia 3D ilustrativa.";
+        ReplacePreviewFigure(character.ClassId);
         SetStatus("Personagem selecionado. Nenhuma sessão de mundo foi criada.");
     }
 
-    private void ReplacePreviewFigure()
+    private void ReplacePreviewFigure(string? classId)
     {
         ClearPreview();
-        var figure = new Node3D { Name = "GenericCharacterPreview" };
-        var bodyMaterial = MakeMaterial(new Color(0.29f, 0.56f, 0.56f), 0.32f);
-        var accentMaterial = MakeMaterial(new Color(0.78f, 0.55f, 0.27f), 0.58f);
-        var darkMaterial = MakeMaterial(new Color(0.10f, 0.16f, 0.20f), 0.18f);
 
-        AddFigurePart(figure, new CapsuleMesh { Radius = 0.34f, Height = 1.15f, RadialSegments = 20, Rings = 8 }, new Vector3(0, 1.25f, 0), bodyMaterial);
-        AddFigurePart(figure, new SphereMesh { Radius = 0.25f, Height = 0.5f, RadialSegments = 20, Rings = 12 }, new Vector3(0, 2.02f, 0), accentMaterial);
-        AddFigurePart(figure, new CapsuleMesh { Radius = 0.13f, Height = 0.84f, RadialSegments = 12, Rings = 6 }, new Vector3(-0.43f, 1.29f, 0), darkMaterial, new Vector3(0, 0, -0.14f));
-        AddFigurePart(figure, new CapsuleMesh { Radius = 0.13f, Height = 0.84f, RadialSegments = 12, Rings = 6 }, new Vector3(0.43f, 1.29f, 0), darkMaterial, new Vector3(0, 0, 0.14f));
-        AddFigurePart(figure, new CapsuleMesh { Radius = 0.16f, Height = 0.92f, RadialSegments = 12, Rings = 6 }, new Vector3(-0.19f, 0.47f, 0), bodyMaterial);
-        AddFigurePart(figure, new CapsuleMesh { Radius = 0.16f, Height = 0.92f, RadialSegments = 12, Rings = 6 }, new Vector3(0.19f, 0.47f, 0), bodyMaterial);
-        AddFigurePart(figure, new BoxMesh { Size = new Vector3(0.82f, 0.58f, 0.12f) }, new Vector3(0, 1.36f, -0.3f), accentMaterial);
-        _previewRoot.AddChild(figure);
-        _figure = figure;
+        // Use the real imported GLB assets. ClassId is only a display hint;
+        // the server contract remains the source of character data.
+        var normalizedClass = classId?.Trim().ToLowerInvariant() ?? string.Empty;
+        var modelPath = normalizedClass.Contains("mage") || normalizedClass.Contains("wizard") ||
+                        normalizedClass.Contains("mago") || normalizedClass.Contains("feitice")
+            ? "res://Assets/Characters/KayKitAdventurers/Mage.glb"
+            : "res://Assets/Characters/KayKitAdventurers/Barbarian.glb";
+
+        var packedModel = ResourceLoader.Load<PackedScene>(modelPath);
+        if (packedModel is null)
+        {
+            GD.PushWarning($"Não foi possível carregar a prévia 3D: {modelPath}");
+            return;
+        }
+
+        var model = packedModel.Instantiate<Node3D>();
+        if (model is null)
+        {
+            GD.PushWarning($"O modelo não possui raiz Node3D: {modelPath}");
+            return;
+        }
+
+        model.Name = "CharacterModelPreview";
+        // Scale only the preview instance; the imported asset remains untouched.
+        model.Scale = new Vector3(1.35f, 1.35f, 1.35f);
+        model.Position = Vector3.Zero;
+        _previewRoot.AddChild(model);
+        _figure = model;
     }
 
     private void ClearPreview()
