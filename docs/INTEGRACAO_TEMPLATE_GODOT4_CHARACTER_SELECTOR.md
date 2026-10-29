@@ -118,3 +118,17 @@ Foi publicado um primeiro port do **palco visual** do Character Selector em `cli
 **Escopo:** porta a experiência visual básica de seleção. Não importa o sistema Multiplayer do template, que depende de GameState/NetworkState/ENet/MultiplayerScene e mundos próprios incompatíveis com a arquitetura atual. A tela principal `CharacterLobby.tscn` continua preservada e conectada à conta. A nova cena é isolada e ainda não foi validada por build/execução local.
 
 Próximo passo: atualizar `D:\ProjetoRPG-Teste-Lobby`, compilar o cliente e abrir `res://Scenes/ImportedLobby/TemplateCharacterSelectorStage.tscn` no Godot 4.7.2 Mono. Não atualizar a pasta original.
+
+
+## Retomada do agente — verificação do port publicado (2026-10-29)
+
+Branch remota consultada: `arena/b2f4e6da-projetorpg`. HEAD confirmado: `b3b6f37481f64607e7e8c2fe625a300345f0b885`. A cadeia de commits do port e os seguintes arquivos foram confirmados na branch:
+
+- `client/Scripts/TemplateCharacterSelectorStage.cs`
+- `client/Scenes/ImportedLobby/TemplateCharacterSelectorStage.tscn`
+- `client/Scenes/ImportedLobby/README.md`
+- `client/Scenes/ImportedLobby/LICENSE-MIT-ORIGINAL.txt`
+
+Leitura estática: o port instancia os modelos Barbarian/Mage existentes, oferece alternância pelas ações `ui_left/ui_right`, e define base, câmera, iluminação e rótulo. O lobby principal ainda mantém sua implementação de preview independente em `CharacterLobby.cs`; portanto a unificação visual com a seleção real ainda não foi feita.
+
+**Validação pendente:** não houve build, importação Godot ou inspeção visual do novo port nesta retomada. Também não há confirmação de que a cópia Windows foi atualizada. Primeiro atualizar com fast-forward somente após verificar branch correta e working tree limpa, compilar o cliente e executar a cena isolada. Não integrar ao lobby principal até receber evidência do build e da inspeção visual.
