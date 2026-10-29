@@ -16,8 +16,8 @@ public partial class AccountGateway : Control
     private LineEdit _password = null!;
     private LineEdit _characterName = null!;
     private VBoxContainer _characterRows = null!;
-    private Control _authenticationPanel = null!;
-    private Control _charactersPanel = null!;
+    private VBoxContainer _authenticationPanel = null!;
+    private VBoxContainer _charactersPanel = null!;
     private Label _status = null!;
     private Label _selectedCharacter = null!;
     private Button _loginButton = null!;
@@ -102,8 +102,8 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { username = _username.Text.Trim(), password = _password.Text }, _jsonOptions);
-            var response = await _api.SendAsync(HTTPClient.Method.Post, "/api/v1/accounts/register", body);
-            if (response.Result != (long)HTTPRequest.Result.Success)
+            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/accounts/register", body);
+            if (response.Result != (long)HttpRequest.Result.Success)
             {
                 SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
                 return;
@@ -125,8 +125,8 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { username = _username.Text.Trim(), password = _password.Text }, _jsonOptions);
-            var response = await _api.SendAsync(HTTPClient.Method.Post, "/api/v1/sessions", body);
-            if (response.Result != (long)HTTPRequest.Result.Success)
+            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/sessions", body);
+            if (response.Result != (long)HttpRequest.Result.Success)
             {
                 SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
                 return;
@@ -162,8 +162,8 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { name = _characterName.Text.Trim(), classId = (string?)null }, _jsonOptions);
-            var response = await _api.SendAsync(HTTPClient.Method.Post, "/api/v1/characters", body, _accessToken);
-            if (response.Result != (long)HTTPRequest.Result.Success)
+            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/characters", body, _accessToken);
+            if (response.Result != (long)HttpRequest.Result.Success)
             {
                 SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
                 return;
@@ -190,7 +190,7 @@ public partial class AccountGateway : Control
             {
                 try
                 {
-                    await _api.SendAsync(HTTPClient.Method.Delete, "/api/v1/sessions/current", bearerToken: token);
+                    await _api.SendAsync(Godot.HttpClient.Method.Delete, "/api/v1/sessions/current", bearerToken: token);
                 }
                 catch (InvalidOperationException)
                 {
@@ -212,8 +212,8 @@ public partial class AccountGateway : Control
     {
         if (_accessToken is null) return;
 
-        var response = await _api.SendAsync(HTTPClient.Method.Get, "/api/v1/characters", bearerToken: _accessToken);
-        if (response.Result != (long)HTTPRequest.Result.Success)
+        var response = await _api.SendAsync(Godot.HttpClient.Method.Get, "/api/v1/characters", bearerToken: _accessToken);
+        if (response.Result != (long)HttpRequest.Result.Success)
         {
             SetStatus("Falha de conexão ao carregar personagens. Tente novamente após confirmar o servidor.", true);
             return;
@@ -335,7 +335,7 @@ public partial class AccountGateway : Control
 
     private static string DescribeApiError(ApiResponse response)
     {
-        if (response.Result != (long)HTTPRequest.Result.Success)
+        if (response.Result != (long)HttpRequest.Result.Success)
             return "Falha de rede ao falar com o servidor.";
 
         string? code = null;

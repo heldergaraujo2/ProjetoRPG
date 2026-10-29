@@ -145,7 +145,7 @@ test('KayKit CC0 license and provenance/hash/animation audit are retained beside
     readFile(path.join(assetDirectory, 'LICENSE.txt'), 'utf8'),
     readFile(path.join(assetDirectory, 'SOURCE.md'), 'utf8')
   ]);
-  assert.equal(createHash('sha256').update(license).digest('hex'), 'ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629');
+  assert.equal(createHash('sha256').update(license.replace(/\r\n/g, '\n'), 'utf8').digest('hex'), 'ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629');
   assert.match(license, /License: \(Creative Commons Zero, CC0\)/i);
   assert.match(license, /creativecommons\.org\/publicdomain\/zero\/1\.0\//i);
   assert.match(source, /Kay Lousberg/);

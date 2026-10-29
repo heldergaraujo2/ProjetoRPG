@@ -8,7 +8,7 @@ public sealed record ApiResponse(long Result, long StatusCode, string Body);
 /// <summary>Small HTTP transport for the real account/session/character API.</summary>
 public partial class AccountApiClient : Node
 {
-    private readonly HTTPRequest _request = new();
+    private readonly HttpRequest _request = new();
     private TaskCompletionSource<ApiResponse>? _pendingRequest;
 
     public string BaseUrl { get; }
@@ -16,7 +16,7 @@ public partial class AccountApiClient : Node
 
     public AccountApiClient()
     {
-        var configuredUrl = Environment.GetEnvironmentVariable("PROJETORPG_SERVER_URL");
+        var configuredUrl = System.Environment.GetEnvironmentVariable("PROJETORPG_SERVER_URL");
         var candidate = string.IsNullOrWhiteSpace(configuredUrl)
             ? "http://127.0.0.1:5050"
             : configuredUrl.Trim();
@@ -43,7 +43,7 @@ public partial class AccountApiClient : Node
     }
 
     public async Task<ApiResponse> SendAsync(
-        HTTPClient.Method method,
+        Godot.HttpClient.Method method,
         string path,
         string? jsonBody = null,
         string? bearerToken = null)
