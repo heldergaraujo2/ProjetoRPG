@@ -1,3 +1,42 @@
+# ATUALIZAÇÃO OPERACIONAL MAIS RECENTE — 2026-10-29
+
+Esta seção é a referência mais recente para os itens que atualiza abaixo; registros históricos posteriores no documento descrevem tentativas/estados anteriores e não devem sobrescrever estas evidências.
+
+## Sincronização Windows → GitHub
+
+- O usuário confirmou que o commit local foi enviado com sucesso para `arena/b2f4e6da-projetorpg`.
+- Commit publicado: [`48a552a1f1ce67e92abdcfcb17fc32df2a4464ac`](https://github.com/heldergaraujo2/ProjetoRPG/commit/48a552a1f1ce67e92abdcfcb17fc32df2a4464ac), mensagem `fix: validate Godot account client build`.
+- O commit inclui 13 arquivos: correções C# em `AccountApiClient.cs` e `AccountGateway.cs`, ajuste do teste de licença para normalizar CRLF/LF, metadados `.uid` e arquivos/metadados importados dos modelos Barbarian e Mage.
+- A saída do Git confirmou o push de `a8ce4c9` para `48a552a`. A branch de trabalho permaneceu `arena/b2f4e6da-projetorpg`; `main` não foi alterada e PR #1 continua aberta. Os avisos LF/CRLF dos arquivos .import/.uid foram apenas avisos de conversão; `git diff --cached --check` passou antes do commit.
+
+## Evidências de validação no Windows
+
+- `npm run check`: **12/12 testes passaram**, sem falhas.
+- `dotnet build .\client\ProjetoRpg.Client.csproj --no-restore --verbosity quiet`: **sucesso**.
+- `npm run test:target`: **sucesso** para os três grupos de teste (protocolo compartilhado, integração do servidor e smoke do cliente Godot), com `GODOT_BIN` apontado para Godot 4.7.2 Mono instalado no Windows.
+- `npm run test:target:client`: **sucesso**; importação/build headless e inicialização da cena Bootstrap confirmados.
+- Importação Godot headless e inicialização headless do projeto: código de saída 0. Saída de inicialização informou `CLIENT_BOOT_OK godot=4.7.2-stable (official) protocol=1` e `CLIENT_ACCOUNT_FLOW_READY`.
+- A integração de Fase 1 com PostgreSQL descartável também passou nesta sessão; o resultado `PHASE1_INTEGRATION_OK` cobriu migrations, configuração, health/readiness, registro/login, hash de senha, sessões com hash/expiração/revogação, ownership/persistência de personagens, audit e smoke WebSocket.
+- `npm run test:target` não equivale a validação de gameplay ou carga de jogadores; o teste de 100 WebSockets ociosos segue pendente.
+
+## Teste manual do fluxo de conta no cliente
+
+- Foi usado um banco PostgreSQL descartável separado, em container `projetorpg-e2e-manual`, porta local `55433`, e servidor de teste em `http://127.0.0.1:5050`. Os containers preexistentes `projetorpg-loadtest-20261029124805` e `nexo-postgres-1` foram preservados e não devem ser interrompidos.
+- `GET /health/live` respondeu HTTP 200. No Godot GUI, o usuário confirmou que a interface de login/cadastro abriu, conseguiu criar uma conta e conectar; em seguida, apareceu a tela de criar/selecionar personagem.
+- Ao selecionar o personagem, a interface informou que o servidor ainda não oferece entrada no mundo nem movimento e que nenhum estado de mundo foi criado. Esse comportamento é a limitação real atual, não uma falha de autenticação.
+- **Não declarar multiplayer/gameplay funcional.** Ainda faltam sessão de entrada em mundo autoritativa, estado de mundo, spawn de personagem e movimento validado/sincronizado pelo servidor. A Fase 2 continua aberta e a Fase 3 ainda não foi entregue.
+
+## Próximo passo exato
+
+1. O agente construtor deve implementar a entrada real no mundo com autoridade do servidor, sem simular multiplayer no cliente e sem alterar o fluxo de conta que já passou na validação.
+2. Definir e testar contrato de entrada em mundo: personagem pertencente à conta autenticada, sessão/mundo autoritativos, spawn validado e retorno de estado inicial; cobrir falhas de ownership, sessão expirada e mundo indisponível.
+3. Em seguida, implementar movimento autorizado/validado pelo servidor e sincronização entre pelo menos dois clientes, com testes de integração reproduzíveis.
+4. Executar separadamente o teste de 100 WebSockets ociosos para fechar a pendência de carga da Fase 1; esse teste não substitui a validação de gameplay.
+5. Manter o mapa externo JDungeon3D Coast isolado até terminar a inspeção de scripts, importação, colisores e navegabilidade descrita na seção de avaliação de mapas. Não alterar `Bootstrap.tscn` ou importar sistemas de terceiros sem revisão.
+6. Preservar a branch `arena/b2f4e6da-projetorpg`, não fazer merge em `main` e manter este `CHECKPOINT.md` atualizado em cada handoff.
+
+---
+
 # CHECKPOINT — continuidade do ProjetoRPG
 
 **Atualizado:** 2026-10-29
