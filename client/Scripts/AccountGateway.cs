@@ -5,27 +5,22 @@ using Godot;
 namespace ProjetoRpg.Client.Scripts;
 
 /// <summary>
-/// Account and persistent-character flow backed by the dedicated server API.
-/// The bearer token stays in memory and is never rendered or logged.
+/// Owns the authenticated account session and routes the user into the character lobby.
+/// The bearer token remains in memory and is never rendered, logged, or persisted.
 /// </summary>
 public partial class AccountGateway : Control
 {
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
     private AccountApiClient _api = null!;
+    private Control _authenticationPanel = null!;
     private LineEdit _username = null!;
     private LineEdit _password = null!;
-    private LineEdit _characterName = null!;
-    private VBoxContainer _characterRows = null!;
-    private VBoxContainer _authenticationPanel = null!;
-    private VBoxContainer _charactersPanel = null!;
-    private Label _status = null!;
-    private Label _selectedCharacter = null!;
     private Button _loginButton = null!;
     private Button _registerButton = null!;
-    private Button _createCharacterButton = null!;
-    private Button _refreshCharactersButton = null!;
-    private Button _logoutButton = null!;
+    private Label _status = null!;
+    private CharacterLobby? _lobby;
     private string? _accessToken;
+    private string? _preferredCharacterId;
     private bool _busy;
 
     public override void _Ready()
@@ -33,68 +28,50 @@ public partial class AccountGateway : Control
         SetAnchorsPreset(LayoutPreset.FullRect);
         _api = new AccountApiClient();
         AddChild(_api);
-        BuildInterface();
+        BuildAuthenticationInterface();
 
         if (_api.ConfigurationError is not null)
-        {
             SetStatus(_api.ConfigurationError, true);
-        }
         else
-        {
             SetStatus($"Servidor configurado: {_api.BaseUrl}. Nenhuma credencial é salva neste dispositivo.");
-        }
     }
 
-    private void BuildInterface()
+    private void BuildAuthenticationInterface()
     {
-        var panel = new PanelContainer
+        var backdrop = new ColorRect
         {
-            CustomMinimumSize = new Vector2(560, 540),
+            Color = new Color(0.025f, 0.045f, 0.071f, 1.0f),
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        backdrop.SetAnchorsPreset(LayoutPreset.FullRect);
+        AddChild(backdrop);
+
+        _authenticationPanel = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(520, 380),
             AnchorLeft = 0.5f,
             AnchorTop = 0.5f,
             AnchorRight = 0.5f,
             AnchorBottom = 0.5f,
-            OffsetLeft = -280,
-            OffsetTop = -270,
-            OffsetRight = 280,
-            OffsetBottom = 270
+            OffsetLeft = -260,
+            OffsetTop = -190,
+            OffsetRight = 260,
+            OffsetBottom = 190
         };
-        AddChild(panel);
-
-        var layout = new VBoxContainer { CustomMinimumSize = new Vector2(520, 500) };
-        panel.AddChild(layout);
-        AddLabel(layout, "ProjetoRPG", 28);
-        AddLabel(layout, "Conta e personagens persistidos no servidor", 16);
-
-        _authenticationPanel = new VBoxContainer();
-        layout.AddChild(_authenticationPanel);
-        _username = AddLineEdit(_authenticationPanel, "Usuário (3–32 caracteres)");
-        _password = AddLineEdit(_authenticationPanel, "Senha (12–128 caracteres)");
+        AddChild(_authenticationPanel);
+        var layout = new VBoxContainer { Separation = 12 };
+        _authenticationPanel.AddChild(layout);
+        AddLabel(layout, "PROJETORPG", 28);
+        AddLabel(layout, "Acesse sua conta para abrir o salão de personagens.", 15);
+        _username = AddLineEdit(layout, "Usuário (3–32 caracteres)");
+        _password = AddLineEdit(layout, "Senha (12–128 caracteres)");
         _password.Secret = true;
-        var authButtons = new HBoxContainer();
-        _authenticationPanel.AddChild(authButtons);
-        _registerButton = AddButton(authButtons, "Criar conta", OnRegisterPressed);
-        _loginButton = AddButton(authButtons, "Entrar", OnLoginPressed);
-
-        _charactersPanel = new VBoxContainer { Visible = false };
-        layout.AddChild(_charactersPanel);
-        AddLabel(_charactersPanel, "Personagens desta conta", 18);
-        var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(0, 130), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
-        _charactersPanel.AddChild(scroll);
-        _characterRows = new VBoxContainer();
-        scroll.AddChild(_characterRows);
-
-        _selectedCharacter = AddLabel(_charactersPanel, "Selecione um personagem para ver o estado persistido.");
-        _characterName = AddLineEdit(_charactersPanel, "Novo nome (letra inicial, 3–20 caracteres)");
-        _createCharacterButton = AddButton(_charactersPanel, "Criar personagem", OnCreateCharacterPressed);
-        _refreshCharactersButton = AddButton(_charactersPanel, "Atualizar lista", OnRefreshCharactersPressed);
-        AddLabel(_charactersPanel,
-            "O servidor ainda não oferece entrada em mundo ou movimento. A demo 3D permanece local e isolada; este fluxo não simula multiplayer.");
-        _logoutButton = AddButton(_charactersPanel, "Encerrar sessão", OnLogoutPressed);
-
-        _status = AddLabel(layout, string.Empty);
-        _status.CustomMinimumSize = new Vector2(0, 50);
-        _status.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        var buttons = new HBoxContainer { Separation = 10 };
+        layout.AddChild(buttons);
+        _registerButton = AddButton(buttons, "Criar conta", OnRegisterPressed);
+        _loginButton = AddButton(buttons, "Entrar", OnLoginPressed);
+        _status = AddLabel(layout, string.Empty, 14);
+        _status.CustomMinimumSize = new Vector2(0, 64);
     }
 
     private async void OnRegisterPressed()
@@ -102,8 +79,8 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { username = _username.Text.Trim(), password = _password.Text }, _jsonOptions);
-            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/accounts/register", body);
-            if (response.Result != (long)HttpRequest.Result.Success)
+            var response = await _api.SendAsync(HttpClient.Method.Post, "/api/v1/accounts/register", body);
+            if (!IsNetworkSuccess(response))
             {
                 SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
                 return;
@@ -115,7 +92,6 @@ public partial class AccountGateway : Control
                 _password.Clear();
                 return;
             }
-
             SetStatus(DescribeApiError(response), true);
         });
     }
@@ -125,45 +101,8 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { username = _username.Text.Trim(), password = _password.Text }, _jsonOptions);
-            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/sessions", body);
-            if (response.Result != (long)HttpRequest.Result.Success)
-            {
-                SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
-                return;
-            }
-
-            if (response.StatusCode != (long)HttpStatusCode.Created || !TryReadSession(response.Body, out var token))
-            {
-                SetStatus(DescribeApiError(response), true);
-                return;
-            }
-
-            _accessToken = token;
-            _password.Clear();
-            _authenticationPanel.Visible = false;
-            _charactersPanel.Visible = true;
-            await RefreshCharactersAsync();
-        });
-    }
-
-    private async void OnRefreshCharactersPressed()
-    {
-        await RunBusyAsync(RefreshCharactersAsync);
-    }
-
-    private async void OnCreateCharacterPressed()
-    {
-        if (_accessToken is null)
-        {
-            SetStatus("Entre novamente para criar um personagem.", true);
-            return;
-        }
-
-        await RunBusyAsync(async () =>
-        {
-            var body = JsonSerializer.Serialize(new { name = _characterName.Text.Trim(), classId = (string?)null }, _jsonOptions);
-            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/characters", body, _accessToken);
-            if (response.Result != (long)HttpRequest.Result.Success)
+            var response = await _api.SendAsync(HttpClient.Method.Post, "/api/v1/sessions", body);
+            if (!IsNetworkSuccess(response))
             {
                 SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
                 return;
@@ -174,135 +113,235 @@ public partial class AccountGateway : Control
                 SetStatus(DescribeApiError(response), true);
                 return;
             }
+            if (!TryReadSession(response.Body, out var token))
+            {
+                SetStatus("O servidor retornou uma sessão inválida. Nenhuma credencial foi armazenada.", true);
+                return;
+            }
 
-            _characterName.Clear();
-            SetStatus("Personagem criado e persistido pelo servidor.");
+            _accessToken = token;
+            _password.Clear();
+            try
+            {
+                OpenLobby();
+            }
+            catch (Exception exception) when (exception is InvalidOperationException or InvalidCastException)
+            {
+                ClearLocalSession();
+                SetStatus("Não foi possível carregar a cena do salão. A sessão local foi removida; tente novamente após corrigir o projeto.", true);
+                return;
+            }
+
+            _authenticationPanel.Visible = false;
             await RefreshCharactersAsync();
         });
     }
 
-    private async void OnLogoutPressed()
+    private void OpenLobby()
+    {
+        var packedScene = ResourceLoader.Load<PackedScene>("res://Scenes/CharacterLobby.tscn")
+            ?? throw new InvalidOperationException("A cena CharacterLobby não está disponível.");
+        var lobby = packedScene.Instantiate<CharacterLobby>()
+            ?? throw new InvalidOperationException("A raiz da cena carregada não é CharacterLobby.");
+        _lobby = lobby;
+        lobby.SetAnchorsPreset(LayoutPreset.FullRect);
+        lobby.RefreshRequested += OnRefreshRequested;
+        lobby.CreateRequested += OnCreateRequested;
+        lobby.LogoutRequested += OnLogoutRequested;
+        AddChild(lobby);
+        lobby.SetBusy(_busy);
+    }
+
+    private async void OnRefreshRequested() => await RunBusyAsync(RefreshCharactersAsync);
+
+    private async void OnCreateRequested(string name)
+    {
+        if (_accessToken is null || _lobby is null) return;
+
+        await RunBusyAsync(async () =>
+        {
+            var body = JsonSerializer.Serialize(new { name, classId = (string?)null }, _jsonOptions);
+            var response = await _api.SendAsync(HttpClient.Method.Post, "/api/v1/characters", body, _accessToken);
+            if (!IsNetworkSuccess(response))
+            {
+                _lobby.SetStatus("Não foi possível alcançar o servidor. O personagem não foi confirmado; tente novamente.", true);
+                return;
+            }
+            if (response.StatusCode == (long)HttpStatusCode.Unauthorized)
+            {
+                ExpireSession();
+                return;
+            }
+            if (response.StatusCode != (long)HttpStatusCode.Created)
+            {
+                _lobby.SetStatus(DescribeApiError(response), true);
+                return;
+            }
+            if (!TryReadCharacter(response.Body, out var createdCharacter))
+            {
+                _lobby.SetStatus("O servidor confirmou a criação, mas retornou dados inválidos. Atualize a lista antes de tentar novamente.", true);
+                return;
+            }
+
+            _preferredCharacterId = createdCharacter.CharacterId;
+            _lobby.ClearNewCharacterName();
+            _lobby.SetStatus("Criação confirmada pelo servidor. Atualizando a lista da conta…");
+            await RefreshCharactersAsync();
+        });
+    }
+
+    private async void OnLogoutRequested() => await LogoutAsync();
+
+    private async Task LogoutAsync()
     {
         var token = _accessToken;
         await RunBusyAsync(async () =>
         {
+            var serverRevoked = false;
             if (!string.IsNullOrEmpty(token))
             {
                 try
                 {
-                    await _api.SendAsync(Godot.HttpClient.Method.Delete, "/api/v1/sessions/current", bearerToken: token);
+                    var response = await _api.SendAsync(HttpClient.Method.Delete, "/api/v1/sessions/current", bearerToken: token);
+                    serverRevoked = IsNetworkSuccess(response) &&
+                        (response.StatusCode == (long)HttpStatusCode.NoContent || response.StatusCode == (long)HttpStatusCode.Unauthorized);
                 }
-                catch (InvalidOperationException)
+                catch (Exception exception) when (exception is InvalidOperationException or TaskCanceledException or TimeoutException)
                 {
-                    // The local session is still cleared when the server is unreachable.
+                    // Local credentials are always cleared, even when the revocation request cannot reach the server.
                 }
             }
 
-            _accessToken = null;
-            _authenticationPanel.Visible = true;
-            _charactersPanel.Visible = false;
-            _characterRows.GetChildren().ToList().ForEach(child => child.QueueFree());
-            _selectedCharacter.Text = "Selecione um personagem para ver o estado persistido.";
-            _password.Clear();
-            SetStatus("Sessão removida deste cliente. Se o servidor estava indisponível, a sessão remota expirará ou poderá ser revogada depois.");
+            ClearLocalSession();
+            SetStatus(serverRevoked
+                ? "Sessão encerrada no servidor e neste cliente."
+                : "Credencial removida deste cliente; a revogação remota não foi confirmada e a sessão expirará ou poderá ser revogada depois.");
         });
     }
 
     private async Task RefreshCharactersAsync()
     {
-        if (_accessToken is null) return;
+        if (_accessToken is null || _lobby is null) return;
 
-        var response = await _api.SendAsync(Godot.HttpClient.Method.Get, "/api/v1/characters", bearerToken: _accessToken);
-        if (response.Result != (long)HttpRequest.Result.Success)
-        {
-            SetStatus("Falha de conexão ao carregar personagens. Tente novamente após confirmar o servidor.", true);
-            return;
-        }
-
-        if (response.StatusCode == (long)HttpStatusCode.Unauthorized)
-        {
-            _accessToken = null;
-            _authenticationPanel.Visible = true;
-            _charactersPanel.Visible = false;
-            SetStatus("A sessão expirou ou foi revogada. Entre novamente.", true);
-            return;
-        }
-
-        if (response.StatusCode != (long)HttpStatusCode.OK)
-        {
-            SetStatus(DescribeApiError(response), true);
-            return;
-        }
-
-        List<CharacterSummary> characters;
+        _lobby.SetLoading(true);
+        ApiResponse response;
         try
         {
-            characters = JsonSerializer.Deserialize<List<CharacterSummary>>(response.Body, _jsonOptions)
-                ?? throw new JsonException("A lista de personagens veio vazia ou inválida.");
+            response = await _api.SendAsync(HttpClient.Method.Get, "/api/v1/characters", bearerToken: _accessToken);
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or TaskCanceledException or TimeoutException)
+        {
+            _lobby.SetLoading(false);
+            _lobby.SetLoadFailure("Não foi possível carregar os personagens. Verifique o servidor e tente atualizar.");
+            _lobby.SetStatus("Falha ao consultar a lista. A sessão continua ativa; tente novamente.", true);
+            return;
+        }
+        if (!IsNetworkSuccess(response))
+        {
+            _lobby.SetLoading(false);
+            _lobby.SetLoadFailure("Não foi possível carregar os personagens. Verifique o servidor e tente atualizar.");
+            _lobby.SetStatus("Falha de conexão ao carregar personagens. A lista atual foi preservada; tente novamente.", true);
+            _preferredCharacterId = null;
+            return;
+        }
+        if (response.StatusCode == (long)HttpStatusCode.Unauthorized)
+        {
+            ExpireSession();
+            return;
+        }
+        if (response.StatusCode != (long)HttpStatusCode.OK)
+        {
+            _lobby.SetLoading(false);
+            _lobby.SetLoadFailure("A resposta do servidor não permitiu carregar a lista. Tente atualizar.");
+            _lobby.SetStatus(DescribeApiError(response), true);
+            _preferredCharacterId = null;
+            return;
+        }
+
+        try
+        {
+            var characters = JsonSerializer.Deserialize<List<CharacterSummary>>(response.Body, _jsonOptions)
+                ?? throw new JsonException("Lista nula.");
+            if (characters.Any(character =>
+                    !Guid.TryParse(character.CharacterId, out _) || string.IsNullOrWhiteSpace(character.Name)))
+                throw new JsonException("Um registro não contém os campos mínimos do contrato.");
+
+            _lobby.SetCharacters(characters, _preferredCharacterId);
+            _preferredCharacterId = null;
+            _lobby.SetLoading(false);
+            _lobby.SetStatus(characters.Count == 0
+                ? "Lista carregada do servidor: nenhum personagem nesta conta."
+                : $"Lista carregada do servidor: {characters.Count} personagem(ns). A seleção não inicia gameplay.");
         }
         catch (JsonException)
         {
-            SetStatus("Resposta inválida ao carregar personagens. A sessão continua em memória.", true);
-            return;
+            _lobby.SetLoading(false);
+            _lobby.SetLoadFailure("O servidor retornou uma lista inválida. A sessão continua ativa; tente atualizar.");
+            _lobby.SetStatus("Resposta inválida ao carregar personagens. A sessão continua em memória; tente atualizar.", true);
+            _preferredCharacterId = null;
         }
-
-        _characterRows.GetChildren().ToList().ForEach(child => child.QueueFree());
-        _selectedCharacter.Text = characters.Count == 0
-            ? "Ainda não há personagens nesta conta. Crie um abaixo."
-            : "Selecione um personagem para ver o estado persistido.";
-
-        foreach (var character in characters)
-        {
-            var summary = string.IsNullOrWhiteSpace(character.ClassId) ? "sem classe" : character.ClassId;
-            var button = new Button { Text = $"{character.Name} — {summary}", CustomMinimumSize = new Vector2(0, 36) };
-            button.Pressed += () => SelectCharacter(character);
-            _characterRows.AddChild(button);
-        }
-
-        SetStatus($"Lista carregada do servidor: {characters.Count} personagem(ns). A seleção não entra em um mundo ainda.");
     }
 
-    private void SelectCharacter(CharacterSummary character)
+    private void ExpireSession()
     {
-        if (!Guid.TryParse(character.CharacterId, out var characterId))
-        {
-            SetStatus("O servidor retornou um ID de personagem inválido.", true);
-            return;
-        }
+        ClearLocalSession();
+        SetStatus("A sessão expirou ou foi revogada pelo servidor. Entre novamente.", true);
+    }
 
-        var className = string.IsNullOrWhiteSpace(character.ClassId) ? "sem classe atribuída" : $"classe {character.ClassId}";
-        _selectedCharacter.Text = $"Selecionado: {character.Name} ({className}) · ID {characterId}";
-        SetStatus("Seleção atual corresponde a um personagem persistido; nenhum estado de mundo foi criado.");
+    private void ClearLocalSession()
+    {
+        _accessToken = null;
+        _preferredCharacterId = null;
+        if (_lobby is not null && GodotObject.IsInstanceValid(_lobby))
+        {
+            _lobby.Visible = false;
+            _lobby.RefreshRequested -= OnRefreshRequested;
+            _lobby.CreateRequested -= OnCreateRequested;
+            _lobby.LogoutRequested -= OnLogoutRequested;
+            _lobby.QueueFree();
+        }
+        _lobby = null;
+        _username.Clear();
+        _password.Clear();
+        _authenticationPanel.Visible = true;
     }
 
     private async Task RunBusyAsync(Func<Task> action)
     {
         if (_busy) return;
         _busy = true;
-        SetButtonsDisabled(true);
+        SetBusy(true);
         try
         {
             await action();
         }
-        catch (Exception exception) when (exception is InvalidOperationException or TaskCanceledException or TimeoutException)
+        catch (Exception exception) when (
+            exception is InvalidOperationException or TaskCanceledException or TimeoutException or JsonException)
         {
-            SetStatus("Solicitação interrompida. Verifique se o servidor está acessível e tente novamente.", true);
+            if (_lobby is not null)
+                _lobby.SetStatus("Solicitação interrompida. Verifique o servidor e atualize para confirmar o estado salvo.", true);
+            else
+                SetStatus("Solicitação interrompida. Verifique se o servidor está acessível e tente novamente.", true);
         }
         finally
         {
             _busy = false;
-            SetButtonsDisabled(false);
+            SetBusy(false);
         }
     }
 
-    private void SetButtonsDisabled(bool disabled)
+    private void SetBusy(bool busy)
     {
-        if (GodotObject.IsInstanceValid(_loginButton)) _loginButton.Disabled = disabled;
-        if (GodotObject.IsInstanceValid(_registerButton)) _registerButton.Disabled = disabled;
-        if (GodotObject.IsInstanceValid(_createCharacterButton)) _createCharacterButton.Disabled = disabled;
-        if (GodotObject.IsInstanceValid(_refreshCharactersButton)) _refreshCharactersButton.Disabled = disabled;
-        if (GodotObject.IsInstanceValid(_logoutButton)) _logoutButton.Disabled = disabled;
+        _loginButton.Disabled = busy;
+        _registerButton.Disabled = busy;
+        _username.Editable = !busy;
+        _password.Editable = !busy;
+        if (_lobby is not null && GodotObject.IsInstanceValid(_lobby))
+            _lobby.SetBusy(busy);
     }
+
+    private static bool IsNetworkSuccess(ApiResponse response) =>
+        response.Result == (long)HttpRequest.Result.Success;
 
     private bool TryReadSession(string body, out string token)
     {
@@ -333,11 +372,25 @@ public partial class AccountGateway : Control
         }
     }
 
+    private bool TryReadCharacter(string body, out CharacterSummary character)
+    {
+        character = new CharacterSummary(string.Empty, string.Empty, null);
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<CharacterSummary>(body, _jsonOptions);
+            if (parsed is null || !Guid.TryParse(parsed.CharacterId, out _) || string.IsNullOrWhiteSpace(parsed.Name))
+                return false;
+            character = parsed;
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
     private static string DescribeApiError(ApiResponse response)
     {
-        if (response.Result != (long)HttpRequest.Result.Success)
-            return "Falha de rede ao falar com o servidor.";
-
         string? code = null;
         try
         {
@@ -348,7 +401,7 @@ public partial class AccountGateway : Control
         }
         catch (JsonException)
         {
-            // Status HTTP remains safe to report without echoing the response body.
+            // Status HTTP remains safe to report without echoing a response body.
         }
 
         return code switch
@@ -369,31 +422,29 @@ public partial class AccountGateway : Control
     {
         if (!GodotObject.IsInstanceValid(_status)) return;
         _status.Text = message;
-        _status.Modulate = isError ? new Color(1.0f, 0.55f, 0.45f) : new Color(0.85f, 0.9f, 1.0f);
+        _status.Modulate = isError ? new Color(1.0f, 0.48f, 0.39f) : new Color(0.76f, 0.88f, 0.93f);
     }
 
-    private static Label AddLabel(Container parent, string text, int fontSize = 14)
+    private static Label AddLabel(Container parent, string text, int fontSize)
     {
         var label = new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        if (fontSize != 14) label.AddThemeFontSizeOverride("font_size", fontSize);
+        label.AddThemeFontSizeOverride("font_size", fontSize);
         parent.AddChild(label);
         return label;
     }
 
     private static LineEdit AddLineEdit(Container parent, string placeholder)
     {
-        var lineEdit = new LineEdit { PlaceholderText = placeholder, CustomMinimumSize = new Vector2(0, 38) };
+        var lineEdit = new LineEdit { PlaceholderText = placeholder, CustomMinimumSize = new Vector2(0, 40) };
         parent.AddChild(lineEdit);
         return lineEdit;
     }
 
     private static Button AddButton(Container parent, string text, Action pressed)
     {
-        var button = new Button { Text = text, CustomMinimumSize = new Vector2(0, 38) };
+        var button = new Button { Text = text, CustomMinimumSize = new Vector2(0, 42) };
         button.Pressed += pressed;
         parent.AddChild(button);
         return button;
     }
-
-    private sealed record CharacterSummary(string CharacterId, string Name, string? ClassId);
 }

@@ -1,6 +1,241 @@
-# ATUALIZAÇÃO OPERACIONAL MAIS RECENTE — 2026-10-29
+# ATUALIZAÇÃO OPERACIONAL MAIS RECENTE — 2026-10-29 — Lobby preparado para validação Windows
 
-Esta seção é a referência mais recente para os itens que atualiza abaixo; registros históricos posteriores no documento descrevem tentativas/estados anteriores e não devem sobrescrever estas evidências.
+Esta seção descreve o conteúdo preparado para a ponte Arena.ai → GitHub → Windows. Ela não declara o lobby funcional: o build/import Godot e a validação visual continuam pendentes.
+
+## Estado dos três ambientes
+
+- **Arena.ai — workspace oficial identificado:** `/home/user/ProjetoRPG`, branch local `arena/b2f4e6da-projetorpg`, HEAD observado `40e8badd43ca28c17662944824a3c25335e22182`. O checkout contém o README modificado e o projeto como arquivos não rastreados; não fiz checkout, reset, clean, stash nem stage em bloco. O snapshot pré-alteração está preservado em `/home/user/ProjetoRPG-preserved-20261029-205352.tar.gz` (SHA-256 `c50706901b1b0d3d72d92ccb50f18e253a30d6f18a68de224c6fee64d86fbe40`).
+- **Cópia de integração Git:** `/home/user/ProjetoRPG-clean-20261029-205359`, branch `arena/b2f4e6da-projetorpg`, base `5feb171abfc776f080c58c324d154e1a39fb948c`, confirmada novamente contra `git ls-remote` antes da integração. Foi usada para alinhar e publicar somente arquivos revisados, pois o checkout oficial antigo tem numerosos arquivos não rastreados e não pode ser atualizado por fast-forward sem reconciliação destrutiva.
+- **Comparação seletiva:** os cinco arquivos novos de cena/ambiente/script/DTO/teste do lobby eram byte-idênticos entre os dois workspaces. `AccountGateway.cs` e `test/client-account-flow.test.js` divergiam. O gateway oficial foi comparado integralmente e adotado na cópia de integração; acrescentei apenas `lobby.SetBusy(_busy)` ao abrir o lobby, para manter os controles ocupados enquanto a lista inicial é consultada. O teste oficial, mais completo, foi preservado e ajustado para verificar as responsabilidades que passaram à cena do lobby. Nenhum arquivo não relacionado foi incluído em bloco; a entrega é limitada aos nove caminhos listados nesta atualização.
+- O documento separado [`docs/CONTRATO_FUTURO_SESSAO_GAMEPLAY.md`](docs/CONTRATO_FUTURO_SESSAO_GAMEPLAY.md) registra requisitos futuros sem inventar rota, spawn, estado inicial ou valores. A mesma seleção de alterações revisadas é mantida no workspace oficial e na cópia de integração.
+- **Windows:** não foi acessado pelo agente. Esta sessão não confirma a existência do Godot/SDK no PC; essa validação depende da execução local descrita abaixo.
+
+## Revisão de fluxo e limites funcionais
+
+- **Cadastro:** preserva `POST /api/v1/accounts/register` e a resposta genérica `202`; senha mascarada e limpa depois da resposta.
+- **Login:** preserva `POST /api/v1/sessions`; só aceita `201` com Bearer/expiração válidos. O token fica em memória. A cena do lobby só é aberta após a sessão válida; falha ao carregar a cena limpa a sessão local e retorna à autenticação.
+- **Listagem/seleção:** usa `GET /api/v1/characters` autenticado, preserva seleção ao atualizar quando o ID continua na lista e apresenta apenas campos retornados pelo servidor. A figura 3D é genérica e não representa atributos, aparência ou estado de gameplay.
+- **Criação:** usa `POST /api/v1/characters`, exige confirmação `201` e corpo parseável antes de limpar o formulário/atualizar a lista. A classe é explicitamente `null`, pois o catálogo de classes continua indisponível.
+- **Logout/troca:** tenta `DELETE /api/v1/sessions/current`, limpa o token/usuário/senha no cliente mesmo se a revogação remota falhar e remove a cena do lobby.
+- **Autoridade:** cadastro/login/personagens permanecem ligados às rotas existentes do servidor. A seleção não cria sessão de mundo. O botão **“Entrar no mundo” permanece desabilitado**; não existe entrada, spawn, estado inicial nem movimento de gameplay implementados no servidor. O lobby não deve ser descrito como multiplayer/gameplay funcional.
+
+## Validação executada no ambiente de desenvolvimento
+
+- Na cópia de integração baseada no branch remoto, `npm run check`: **21/21 testes Node passaram**. São 20 verificações estáticas e 1 smoke comportamental HTTP/WebSocket do protótipo Node legado; nenhum executa o `AccountGateway` C#, requests reais do cliente Godot ou a cena do lobby.
+- No workspace oficial do Agent, `npm run check`: **28/28 testes Node passaram**. Os sete adicionais exercitam o harness local de clientes estacionados com fixtures; esse conjunto local não foi incluído na entrega seletiva e não equivale a teste de carga real contra o servidor publicado. Também não valida o cliente Godot.
+- `git diff --check`: passou.
+- O diagnóstico desta sessão encontrou Debian 12 x86_64, Node `v22.22.3` e npm `10.9.8`; não encontrou executáveis Godot/Godot Mono nem .NET nas localizações acessíveis pesquisadas. O `npm run doctor` reporta Godot Mono, SDK .NET e runtime .NET 10 ausentes.
+- A tentativa anterior de `npm run test:target:client` foi bloqueada com código 2 antes de import/build por ausência do Godot .NET. Não repeti tentativas de compilação sem a toolchain. **Não houve build C#, importação Godot, boot real do Bootstrap nem validação visual nesta revisão.** O smoke headless também não provaria a aparência do lobby.
+
+## Requisitos e comandos de validação no Windows
+
+- `client/ProjetoRpg.Client.csproj`: `Godot.NET.Sdk/4.7.2`, TFM `net8.0`; `shared` também `net8.0`.
+- `global.json`: SDK `10.0.402`, `rollForward: latestPatch` (SDK selecionado deve ser esse patch ou patch compatível da banda 10.0.4xx). Godot deve ser **4.7.2 Mono**; o runner aceita genericamente 4.x Mono, por isso a versão exata deve ser conferida antes. Godot inclui runtime para executar jogos. O build precisa de targeting pack .NET 8; primeiro tente o restore normal e só investigue SDK 8 se o erro disser especificamente que falta `Microsoft.NETCore.App.Ref`. Não instale runtime .NET 8 separado.
+
+Na raiz do checkout que contém esta revisão, confirme ferramentas/versões, restaure/compile e execute o import/build/boot headless:
+
+```powershell
+$godot = (Get-Command godot -ErrorAction SilentlyContinue).Source
+if (-not $godot) { $godot = Read-Host 'Caminho completo do executável console Godot 4.7.2 Mono' }
+$godotVersion = (& $godot --version 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $godotVersion -notmatch '^4\.7\.2.*mono') { throw "Godot inesperado: $godotVersion" }
+$dotnetVersion = (& dotnet --version 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $dotnetVersion -notmatch '^10\.0\.4\d{2}$') { throw "SDK incompatível com global.json: $dotnetVersion" }
+dotnet --list-sdks
+dotnet --list-runtimes
+node --version
+npm --version
+npm ci
+dotnet restore .\client\ProjetoRpg.Client.csproj
+dotnet build .\client\ProjetoRpg.Client.csproj --no-restore
+$env:GODOT_BIN = $godot
+npm run test:target:client
+if ($LASTEXITCODE -ne 0) { throw 'Smoke Godot/.NET falhou; preserve a saída completa.' }
+```
+
+O resultado do smoke deve incluir `GODOT_CLIENT_SMOKE_OK` e o boot deve incluir `CLIENT_BOOT_OK`. Para a validação visual do **lobby** (não apenas do Bootstrap): subir servidor e banco descartáveis, configurar `PROJETORPG_SERVER_URL` para HTTPS ou HTTP loopback de teste, abrir `client/project.godot` no editor, rodar o projeto pelo F5, autenticar uma conta de teste e observar o lobby após o login. Conferir importação/compilação, layout/câmera/luz/figura genérica, listagem, seleção/prévia, criação confirmada pelo servidor, refresh, logout/troca e ausência de erros no Output/Debugger. Não usar produção nem registrar senhas/tokens. A cena `CharacterDemo.tscn` é independente e não deve substituir a cena principal.
+
+---
+
+# REGISTRO DE RECUPERAÇÃO INICIAL — 2026-10-29 (histórico)
+
+Este registro descreve a retomada inicial, antes da integração seletiva e da preparação do pacote Windows. Os fatos atuais constam na seção operacional mais recente acima.
+
+## Preservação e estado Git
+
+- Branch correta: `arena/b2f4e6da-projetorpg`, status informado `pr_open`. HEAD local permanece `40e8badd43ca28c17662944824a3c25335e22182`. Após `git fetch` somente para ler o remoto, `origin/arena/b2f4e6da-projetorpg` aponta para `5feb171abfc776f080c58c324d154e1a39fb948c`; o branch local está 26 commits atrás. Não fiz fast-forward, pull, commit ou push.
+- O working tree tem `README.md` modificado e 131 arquivos não rastreados: 112 byte-idênticos ao remoto, 12 divergentes e 7 locais exclusivos. Arquivos do lobby, APIs, projeto, testes e docs seguem presentes no workspace; não descartei nenhum.
+- O stash solicitado `c3efbd5a35c03469bbe9f16f8321157ff90a288a` **não está presente** em `git stash list`; `git cat-file` não encontra o objeto. A inspeção somente leitura dos reflogs não encontrou referência ao stash. `git fsck --full --unreachable --no-reflogs` reportou 20 blobs inalcançáveis, mas todos têm SHA-1 idêntico a arquivos já presentes no workspace (incluindo README, AccountGateway, lobby, testes e documentos); não há commit/tree de stash recuperável nem conteúdo distinto a restaurar. Não alterei objetos ou referências. A busca por arquivos `.bak`, `.backup`, `.patch`, `.tar`, `.tar.gz` ou com `snapshot` no nome (excluindo `.git` e `node_modules`) não encontrou backups dentro do workspace. Não consultei diretórios externos. Este checkout não permite confirmar ou restaurar backups fora dele.
+
+### Inventário do working tree
+
+Capturado com `git status --porcelain=v1 --untracked-files=all`; nada está staged. Única alteração rastreada: `M README.md`. Há **131 arquivos `??`**; 112 têm conteúdo idêntico ao remoto atual, 12 diferem do remoto e 7 são exclusivos locais. Lista integral (paths relativos à raiz):
+
+```text
+.gitignore
+.nvmrc
+CHECKPOINT.md
+ProjetoRpg.sln
+client/Assets/Characters/KayKitAdventurers/Barbarian.glb
+client/Assets/Characters/KayKitAdventurers/Barbarian.glb.import
+client/Assets/Characters/KayKitAdventurers/Barbarian_barbarian_texture.png
+client/Assets/Characters/KayKitAdventurers/Barbarian_barbarian_texture.png.import
+client/Assets/Characters/KayKitAdventurers/LICENSE.txt
+client/Assets/Characters/KayKitAdventurers/Mage.glb
+client/Assets/Characters/KayKitAdventurers/Mage.glb.import
+client/Assets/Characters/KayKitAdventurers/Mage_mage_texture.png
+client/Assets/Characters/KayKitAdventurers/Mage_mage_texture.png.import
+client/Assets/Characters/KayKitAdventurers/SOURCE.md
+client/ProjetoRpg.Client.csproj
+client/README.md
+client/Scenes/Bootstrap.tscn
+client/Scenes/CharacterActor.tscn
+client/Scenes/CharacterDemo.tscn
+client/Scenes/CharacterLobby.tscn
+client/Scenes/CharacterLobbyEnvironment.tres
+client/Scripts/AccountApiClient.cs
+client/Scripts/AccountApiClient.cs.uid
+client/Scripts/AccountGateway.cs
+client/Scripts/AccountGateway.cs.uid
+client/Scripts/Bootstrap.cs
+client/Scripts/Bootstrap.cs.uid
+client/Scripts/CharacterActor.cs
+client/Scripts/CharacterActor.cs.uid
+client/Scripts/CharacterLobby.cs
+client/Scripts/CharacterSummary.cs
+client/Scripts/DemoCamera.cs
+client/Scripts/DemoCamera.cs.uid
+client/project.godot
+content/manifest.json
+content/schemas/manifest.schema.json
+docs/02_ARQUITETURA.md
+docs/AVALIACAO_MAPAS_3D_2026-10-29.md
+docs/CHANGELOG.md
+docs/DEMO_3D_PERSONAGEM.md
+docs/LOAD_TESTING.md
+docs/WINDOWS_SETUP.md
+docs/adr/ADR-001-stack.md
+docs/archive/02_ARQUITETURA-before-reconciliation.md
+docs/archive/ADR-001-before-version-audit.md
+docs/archive/README-before-official-import.md
+docs/archive/RECOVERY.md
+docs/archive/client-README-before-scaffold.md
+docs/archive/gitignore-before-scaffold.txt
+docs/archive/infra-README-before-scaffold.md
+docs/archive/package-before-target-scaffold.json
+docs/archive/server-README-before-scaffold.md
+docs/referencias/README.md
+docs/referencias/inventario-elfico-referencia.png
+docs/referencias/painel-atributos-elfico-referencia.png
+global.json
+infra/README.md
+package-lock.json
+package.json
+public/app.js
+public/assets/mesh-manifest.json
+public/data/game-data.json
+public/index.html
+public/styles.css
+rpg-pack/00_LEIA-ME_PRIMEIRO.md
+rpg-pack/01_VISAO_E_ESCOPO.md
+rpg-pack/02_ARQUITETURA.md
+rpg-pack/03_MECANICAS.md
+rpg-pack/04_DADOS_EXTENSIVEIS.md
+rpg-pack/05_REDE_E_PROTOCOLO.md
+rpg-pack/06_SERVIDOR.md
+rpg-pack/07_CLIENTE.md
+rpg-pack/08_FASES.md
+rpg-pack/09_TESTES_QUALIDADE.md
+rpg-pack/10_PVP_BALANCEAMENTO.md
+rpg-pack/11_SEGURANCA.md
+rpg-pack/12_LEGAL_ORIGINALIDADE.md
+rpg-pack/13_REFERENCIA_PESQUISA.md
+rpg-pack/14_PROMPTS.md
+rpg-pack/ASSETS_LICENCAS.md
+rpg-pack/CHECKPOINT.md
+rpg-pack/CLAUDE.md
+rpg-pack/THIRD_PARTY.md
+rpg-pack/data_examples/boss.json
+rpg-pack/data_examples/drop_table.json
+rpg-pack/data_examples/event.json
+rpg-pack/data_examples/item_weapon.json
+rpg-pack/data_examples/map.json
+rpg-pack/data_examples/monster.json
+rpg-pack/data_examples/npc.json
+rpg-pack/data_examples/pvp_config.json
+rpg-pack/data_examples/quest.json
+rpg-pack/data_examples/recipe.json
+rpg-pack/data_examples/refine_config.json
+rpg-pack/data_examples/skill.json
+rpg-pack/templates/ADR.md
+rpg-pack/templates/SESSAO.md
+scripts/check-target-stack.sh
+scripts/check-toolchain.js
+scripts/load-parked-clients.js
+scripts/phase1-integration.js
+scripts/target-godot-smoke.js
+scripts/target-server-smoke.js
+server/Accounts/AccountEndpoints.cs
+server/Accounts/AuthService.cs
+server/Characters/CharacterService.cs
+server/Configuration/ServerConfiguration.cs
+server/Content/ContentCatalog.cs
+server/Network/WebSocketEndpoint.cs
+server/Persistence/DatabaseCommandRunner.cs
+server/Persistence/MigrationRunner.cs
+server/Persistence/Migrations/0001_initial.down.sql
+server/Persistence/Migrations/0001_initial.up.sql
+server/Program.cs
+server/ProjetoRpg.Server.csproj
+server/README.md
+server/Services/WorldTickService.cs
+server/Services/WorldTickState.cs
+server/appsettings.json
+server.js
+server/packages.lock.json
+shared/ProjetoRpg.Shared.csproj
+shared/Protocol/ProtocolEnvelope.cs
+test/client-account-flow.test.js
+test/client-character-lobby.test.js
+test/game-data.test.js
+test/godot-character-demo.test.js
+test/load-parked-clients.test.js
+test/prototype-smoke.test.js
+tests/Shared.Smoke/Program.cs
+tests/Shared.Smoke/Shared.Smoke.csproj
+```
+
+## Revisão e correções locais
+
+- Revisei `Bootstrap.tscn`, `AccountGateway`, `AccountApiClient`, `CharacterLobby.tscn`, ambiente `.tres`, DTO, endpoints, serviços e testes. `GET/POST /api/v1/characters`, sessão Bearer e logout são contratos reais. Não encontrei endpoint autoritativo de entrada no mundo; o botão continua desabilitado.
+- Encontrei um erro de tipos C# entre `AccountGateway` e `AccountApiClient`: as chamadas usavam `HTTPClient`/`HTTPRequest`, enquanto a API .NET do Godot usa `HttpClient.Method`/`HttpRequest.Result`. Alinhei o gateway à assinatura já presente no transporte e à documentação oficial Godot C#.
+- Corrigi também caminhos de falha: se a cena do lobby não carregar, limpa a sessão local e preserva a tela de login; erros excepcionais ao carregar a lista encerram o estado de loading; logout esconde o lobby imediatamente antes de enfileirar sua liberação e limpa usuário/senha da tela de autenticação, evitando exibir dados da conta anterior durante a troca.
+- Reforcei verificações estáticas para tipos C#, ordem `201 → parse → refresh`, remoção do preview anterior, falha de carregamento, limpeza de sessão e ausência de rota world. Essas verificações leem texto/arquivos: **não** são teste C# nem simulação de UI/API.
+- Arquivos editados nesta retomada: `client/Scripts/AccountGateway.cs`, `test/client-account-flow.test.js`, `test/client-character-lobby.test.js`, `client/README.md`, `README.md`, `docs/02_ARQUITETURA.md`, `docs/CHANGELOG.md`, `docs/WINDOWS_SETUP.md`, `docs/referencias/README.md` e `CHECKPOINT.md`. `AccountApiClient.cs` foi inspecionado como referência e não alterado.
+
+## Contratos ausentes para entrada no mundo
+
+`docs/02_ARQUITETURA.md` agora registra os componentes necessários sem alegar que já existam: validar Bearer e ownership do `characterId`, resolver mundo/instância e spawn no servidor, criar sessão de mundo de forma atômica/idempotente, retornar estado inicial autoritativo, definir canal realtime autenticado e cobrir sessão expirada/ownership/concorrência/reconexão. `WebSocketEndpoint` atual só valida handshake/protocolo. Nenhum path/resposta de entrada foi implementado ou presumido.
+
+## Referências e ambiente de validação
+
+- As fontes MU externas e a documentação Godot solicitadas fora de `github.com` não puderam ser abertas porque os hosts não pertencem à allowlist de saída deste sandbox. As URLs e estados individuais estão em [`docs/referencias/README.md`](docs/referencias/README.md); os equivalentes oficiais `godotengine/godot-docs` branch `4.7` foram usados quando disponíveis. O tutorial e a referência da classe [`HttpRequest`](https://github.com/godotengine/godot-docs/blob/4.7/classes/class_httprequest.rst) documentam `HttpRequest`, `HttpClient.Method` e `(long)HttpRequest.Result.Success`, confirmando a nomenclatura para a API 4.7; isso motivou a correção.
+- `npm ci --ignore-scripts --no-audit --no-fund` já havia passado; não foi necessário reinstalar dependências nesta etapa. Após adicionar testes estáticos para versão do SDK/tipos HTTP, falha ao abrir cena e logout com erro de revogação, `npm test`: **28/28** e `npm run check`: **passou**, incluindo os mesmos **28/28**. `git diff --check` passou; a verificação adicional de whitespace passou nos 13 arquivos de código/docs revisados/editados, inclusive untracked. Os testes são Node/estáticos (mais teste do harness de carga com servidor fixture), não compilação nem integração do cliente Godot.
+- `npm run doctor`: status 1, sem Godot Mono, SDK .NET, PostgreSQL e Docker. `dotnet build client/ProjetoRpg.Client.csproj`: status 127 (`dotnet: command not found`). `npm run test:target:client`: status 2 antes de importar/buildar, porque não há Godot 4 .NET. `npm run test:phase1`: status 2 no preflight por SDK .NET ausente, antes de criar container. Nenhuma integração com servidor/banco real foi executada.
+- **Inspeção visual:** não realizada; sem Godot não houve câmera, iluminação, escala, interação, importação ou conferência de liberação em runtime. Não declarar lobby validado em execução.
+
+## Próximo passo exato
+
+1. A verificação local de recuperação não encontrou stash nem backup distinto recuperável; manter este worktree intacto. Se um backup verificável vier a ficar acessível no workspace autorizado, registrar localização e conteúdo antes de qualquer uso. Não sincronizar: o branch está 26 commits atrás e há 12 arquivos divergentes.
+2. Em Windows com Godot 4.7.2 Mono e SDK .NET 10.0.402, executar `dotnet restore client\ProjetoRpg.Client.csproj`, `dotnet build client\ProjetoRpg.Client.csproj` e `npm run test:target:client`; depois abrir o projeto no editor e validar a checklist de [`docs/WINDOWS_SETUP.md`](docs/WINDOWS_SETUP.md).
+3. Com PostgreSQL realmente descartável e servidor local, testar login válido/inválido, lista vazia/erro/retry, seleção e descarte do preview, criação válida/inválida/duplicada, refresh após 201 e logout/troca de conta. Não usar produção.
+4. Manter entrada no mundo desabilitada até contrato e implementação server-side autoritativos. Atualizar evidências depois da execução real; não declarar fases concluídas por testes estáticos.
+
+---
+
+# REGISTRO OPERACIONAL ANTERIOR — 2026-10-29 (histórico)
+
+Esta seção registra fatos da etapa anterior e é mantida como histórico.
 
 ## Sincronização Windows → GitHub
 
