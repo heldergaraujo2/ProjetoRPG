@@ -1,10 +1,10 @@
 # Demo 3D local de personagem — estado e execução
 
-## Recuperação dos artefatos — 2026-10-29
+## Artefatos e estado da validação — 2026-10-29
 
-Os artefatos reais da demonstração foram recuperados do workspace e publicados no repositório: `CharacterDemo.tscn`, `CharacterActor.tscn`, scripts C# do ator/câmera, KayKit Barbarian/Mage em GLB, licença CC0 e `SOURCE.md` com origem, hashes e inventário dos clipes. Os dois GLBs contêm PNG embutido, rig de 41 joints e 76 animações cada; hashes e nomes completos são registrados no arquivo de origem/licença.
+Os arquivos reais estão nos caminhos publicados abaixo; não foi necessário mover nem duplicar os GLBs. `SOURCE.md` e `LICENSE.txt` preservam origem e CC0. Cada GLB possui textura PNG embutida, rig de 41 joints e 76 clipes declarados; os hashes e inventário completo estão em [`SOURCE.md`](../client/Assets/Characters/KayKitAdventurers/SOURCE.md).
 
-O teste Node dedicado passou 3/3 e as referências estáticas das cenas resolvem. Isso não valida o importador/renderizador Godot. `npm run test:target:client` permanece bloqueado (código 2) pela ausência do executável Godot 4 .NET neste ambiente; build C#, abertura com F6 e inspeção visual não foram executados. `Bootstrap.tscn` permanece como cena principal oficial.
+O teste Node dedicado passou **4/4**, incluindo hashes/conteúdo GLB, caminhos reais, referências externas das cenas, licença e cena principal. Isso é validação estática, não importação Godot. O script do ator agora envia `GD.PushError` legível se o modelo obrigatório estiver ausente ou não instanciar como `Node3D`. Neste executor não há Godot 4 Mono nem .NET SDK; `npm run test:target:client`, import/build C#, F6 e inspeção visual continuam pendentes. `Bootstrap.tscn` permanece como cena principal oficial.
 
 ## Escopo
 
@@ -19,37 +19,92 @@ Esta cena é uma demonstração isolada, fora da cena inicial `client/Scenes/Boo
 - **Cena principal oficial:** permanece `Bootstrap.tscn`; não foi substituída.
 - **Modelos, licença, hashes e inventário dos clipes:** [`client/Assets/Characters/KayKitAdventurers/SOURCE.md`](../client/Assets/Characters/KayKitAdventurers/SOURCE.md).
 
-## Abrir a cena
+## Instruções exatas para Windows — Godot 4.7.2 Mono
 
-No Windows, informe a pasta **real** que contém os executáveis, descubra os binários instalados, confira a edição/versão pela própria saída de `--version` e valide .NET/Node. Este ambiente Linux não consegue acessar a instalação Windows; não presuma o caminho do exemplo nem instale nada automaticamente.
+### Caminhos reais publicados
+
+Não mova nem copie os modelos. A estrutura já está organizada assim, relativa à raiz do repositório:
+
+- `client/Scenes/CharacterDemo.tscn` — cena completa a abrir e executar.
+- `client/Scenes/CharacterActor.tscn` — ator reutilizável instanciado pela demo.
+- `client/Assets/Characters/KayKitAdventurers/Barbarian.glb` — jogador local.
+- `client/Assets/Characters/KayKitAdventurers/Mage.glb` — NPC local.
+- `client/Assets/Characters/KayKitAdventurers/SOURCE.md` e `LICENSE.txt` — origem, hashes, inventário e CC0.
+
+As texturas PNG estão embutidas nos GLBs; não há arquivos de textura externos a localizar. A cena contém chão/colisão, iluminação, câmera de acompanhamento, marcador de destino e instruções locais.
+
+### Conferir o executável e testar pelo PowerShell
+
+Abra PowerShell na raiz do clone ProjetoRPG (a pasta que contém `package.json`, `global.json` e `client`). O caminho informado para o executável é usado literalmente:
 
 ```powershell
-$godotDir = Read-Host 'Pasta real que contém os executáveis Godot Mono 4.7.2'
-if (-not (Test-Path -LiteralPath $godotDir -PathType Container)) { throw "Pasta não encontrada: $godotDir" }
-$godotCandidates = Get-ChildItem -LiteralPath $godotDir -File -Filter '*mono*win64*.exe'
-$godotCandidates | Select-Object FullName, Length, LastWriteTime
-$godot = $godotCandidates | Where-Object { $_.Name -notmatch 'console' } | Select-Object -First 1
-if (-not $godot) { $godot = $godotCandidates | Select-Object -First 1 }
-if (-not $godot) { throw 'Nenhum executável mono win64 foi encontrado nesta pasta.' }
-$godotExe = $godot.FullName
-$version = & $godotExe --version
-$version
-if ($LASTEXITCODE -ne 0 -or $version -notmatch '^4\.7\.2.*mono') {
-  throw "Esperava Godot 4.7.2 Mono; encontrado: $version"
+$repo = (Resolve-Path .).Path
+$godot = 'D:\Ferramentas\Godot\4.7.2\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe'
+$client = Join-Path $repo 'client'
+$project = Join-Path $client 'project.godot'
+$scene = Join-Path $client 'Scenes\CharacterDemo.tscn'
+
+$requiredFiles = @(
+  $godot,
+  $project,
+  $scene,
+  (Join-Path $client 'Scenes\CharacterActor.tscn'),
+  (Join-Path $client 'Assets\Characters\KayKitAdventurers\Barbarian.glb'),
+  (Join-Path $client 'Assets\Characters\KayKitAdventurers\Mage.glb'),
+  (Join-Path $client 'Assets\Characters\KayKitAdventurers\SOURCE.md')
+)
+foreach ($file in $requiredFiles) {
+  if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Arquivo obrigatório não encontrado: $file" }
+}
+
+$godotVersion = (& $godot --version 2>&1 | Out-String).Trim()
+$godotVersion
+if ($LASTEXITCODE -ne 0 -or $godotVersion -notmatch '^4\.7\.2.*mono') {
+  throw "Esperava Godot 4.7.2 Mono; recebido: $godotVersion"
+}
+$dotnetVersion = (& dotnet --version 2>&1 | Out-String).Trim()
+$dotnetVersion
+if ($LASTEXITCODE -ne 0 -or $dotnetVersion -notmatch '^10\.0\.') {
+  throw "Verifique o SDK .NET requerido por global.json (10.0.402, latestPatch); recebido: $dotnetVersion"
 }
 node --version
 npm --version
-dotnet --list-sdks
-$dotnetVersion = & dotnet --version
-if ($LASTEXITCODE -ne 0 -or $dotnetVersion -notmatch '^10\.') {
-  throw "Esperava .NET SDK 10; encontrado: $dotnetVersion"
-}
-$env:GODOT_BIN = $godotExe
+
+# Teste estático de caminhos, hashes/estrutura GLB, cenas, materiais/texturas e licença.
+node --test .\test\godot-character-demo.test.js
+if ($LASTEXITCODE -ne 0) { throw 'O teste estático da demo falhou.' }
+
+# Importa recursos no editor headless, compila C# e inicia o Bootstrap oficial.
+# Exige Godot Mono e o SDK .NET resolvido por global.json.
+$env:GODOT_BIN = $godot
 npm run test:target:client
-& $godotExe --path (Join-Path (Get-Location) 'client') --editor
+if ($LASTEXITCODE -ne 0) { throw 'O smoke Godot/.NET falhou; leia a saída acima.' }
 ```
 
-No editor, aguarde o primeiro import dos GLBs; selecione `client/Scenes/CharacterDemo.tscn` e use **F6 / Run Current Scene**. Não use F5 para testar a demo: F5 continua iniciando o projeto pela cena Bootstrap original.
+O `global.json` na raiz fixa SDK .NET `10.0.402` com `rollForward: latestPatch`; execute os comandos a partir da raiz para que o SDK correto seja resolvido. O smoke `npm run test:target:client` deve terminar com `GODOT_CLIENT_SMOKE_OK`. Ele cobre importação headless/build C# e inicialização da cena Bootstrap — **não executa a demo nem aprova sua aparência**. Se quiser também a suíte geral do repositório, com as dependências Node já instaladas, rode `npm run check`; ela não substitui o smoke Godot nem o teste visual.
+
+### Importação inicial e abertura do projeto
+
+A primeira importação dos GLBs acontece quando o editor varre/importa os arquivos do projeto; mantenha os dois `.glb` nos caminhos acima. Você pode abrir o projeto por qualquer um destes meios:
+
+1. No Godot Project Manager, escolha **Import** e selecione exatamente `$project` (isto é, `<raiz do clone>\client\project.godot`); confirme o diretório `client`.
+2. Ou, na mesma janela PowerShell, execute:
+
+   ```powershell
+   & $godot --editor --path $client
+   ```
+
+Na primeira abertura, aguarde a varredura/importação terminar e a atividade de importação sumir. Se o editor solicitar build das assemblies C#, use **Build** e aguarde sucesso. Não feche o editor enquanto ainda processa os GLBs. Depois, no painel **FileSystem**, abra `Scenes/CharacterDemo.tscn` (caminho absoluto calculado em `$scene`). Para executar a cena atualmente aberta, use **F6 / Run Current Scene**. **Não use F5** para testar a demo: F5 usa `run/main_scene` e deve continuar abrindo `Scenes/Bootstrap.tscn`.
+
+### Output, debugger e erros de recurso
+
+Com a cena aberta e durante a importação/execução, confira o painel inferior **Output** e as abas de **Debugger** (especialmente **Errors** e **Warnings**). Resolva primeiro erros de parse/importação, referências `res://`, build C# e recursos ausentes; a mensagem do Godot no Output deve indicar o caminho que falhou. O `CharacterActor` também emite `GD.PushError` explicando quando `ModelScene` está ausente ou não instancia como `Node3D`. Não apague `.godot`, caches ou arquivos de origem para contornar erros; registre a mensagem, versão do Godot e SDK e preserve os arquivos.
+
+### Critérios: importação concluída não é validação visual
+
+**Importação/build concluídos** significa que a varredura terminou sem erros de import, o teste `npm run test:target:client` foi aprovado (`GODOT_CLIENT_SMOKE_OK`) e o Bootstrap iniciou com `CLIENT_BOOT_OK`. Isso prova a etapa headless indicada, mas não prova que a cena CharacterDemo abriu ou que modelos/texturas estão visualmente corretos.
+
+**Validação visual da demo** só deve ser marcada depois de abrir `client/Scenes/CharacterDemo.tscn` no editor, executar F6 e confirmar na janela do jogo que Barbarian e Mage estão visíveis com materiais/texturas, câmera e escala adequadas; clicar no chão move o Barbarian; repouso/caminhada/corrida aparecem quando aplicáveis; o Mage permanece NPC local; e Output/Debugger não mostram erros pertinentes. Registre o resultado real (e, se possível, captura de tela). Sem essa execução manual, mantenha a validação visual como pendente. A demo não implementa combate, multiplayer, navegação de jogo ou persistência.
 
 ### Tentativa de validação deste ambiente — 2026-10-28
 
@@ -57,7 +112,7 @@ No editor, aguarde o primeiro import dos GLBs; selecione `client/Scenes/Characte
 - `node --version` / `npm --version`: `v22.22.3` / `10.9.8`. `GODOT_BIN` está unset; `command -v godot`, `godot4`, `dotnet` e `opencode` não encontrou executáveis. `dotnet --version` terminou com código 127 (`dotnet: command not found`).
 - `npm run test:target:client` foi executado e terminou com **código 2**: `TARGET_TEST_BLOCKED: Godot 4 .NET executable is unavailable. Install the official matching Mono build and rerun npm run test:target:client.` O script foi lido antes da execução; sem Godot ele sai antes de importar ou alterar o projeto. Não houve build/import/boot.
 - O checkpoint anterior registra uma validação Windows do usuário com Godot 4.7.2 stable Mono, .NET SDK 10.0.403 e Node 22.23.4; isso é histórico reportado, não uma verificação repetida do caminho/binário nesta missão.
-- **F6 e verificação visual não executados.** Modelos, texturas, câmera, movimento, animações, escala/orientação e erros de execução continuam sem validação visual. O caminho do executável e a saída atual das versões precisam ser confirmados no próprio Windows usando os comandos acima.
+- **F6 e verificação visual não executados.** Modelos, texturas, câmera, movimento, animações, escala/orientação e erros de execução continuam sem validação visual. O caminho do executável informado pelo usuário está registrado acima; a existência do binário, sua versão atual, o SDK resolvido e a execução visual ainda precisam ser confirmados no próprio Windows usando os comandos acima.
 
 Portanto não declarar a demo aberta/importada/buildada com sucesso até realizar essa validação no Windows.
 

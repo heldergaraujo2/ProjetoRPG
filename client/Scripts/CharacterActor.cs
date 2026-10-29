@@ -26,13 +26,16 @@ public partial class CharacterActor : CharacterBody3D
     {
         if (ModelScene is null)
         {
-            GD.PushError($"{Name}: no visual model scene was assigned.");
+            GD.PushError($"{Name}: required visual model is missing. Assign ModelScene to a valid GLB/PackedScene and verify its res:// file path exists; CharacterDemo uses Barbarian.glb for Player and Mage.glb for NPC.");
             return;
         }
 
-        if (ModelScene.Instantiate() is not Node3D model)
+        Node instantiatedModel = ModelScene.Instantiate();
+        if (instantiatedModel is not Node3D model)
         {
-            GD.PushError($"{Name}: the assigned visual model root is not Node3D.");
+            string modelPath = string.IsNullOrWhiteSpace(ModelScene.ResourcePath) ? "<unknown resource path>" : ModelScene.ResourcePath;
+            GD.PushError($"{Name}: required visual model '{modelPath}' did not instantiate with a Node3D root. Check that the GLB imports correctly.");
+            instantiatedModel.Free();
             return;
         }
 

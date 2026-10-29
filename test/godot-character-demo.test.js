@@ -1,12 +1,23 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const assetDirectory = path.join(root, 'client', 'Assets', 'Characters', 'KayKitAdventurers');
+const clientDirectory = path.join(root, 'client');
+const assetDirectory = path.join(clientDirectory, 'Assets', 'Characters', 'KayKitAdventurers');
+const expectedSceneResources = new Map([
+  ['Scenes/CharacterActor.tscn', ['res://Scripts/CharacterActor.cs', 'res://Assets/Characters/KayKitAdventurers/Barbarian.glb']],
+  ['Scenes/CharacterDemo.tscn', [
+    'res://Scripts/DemoCamera.cs',
+    'res://Scenes/CharacterActor.tscn',
+    'res://Assets/Characters/KayKitAdventurers/Barbarian.glb',
+    'res://Assets/Characters/KayKitAdventurers/Mage.glb'
+  ]]
+]);
 const expectedAssets = new Map([
   ['Barbarian.glb', 'cefc311a0e10c7858b6141f5ada7e33268727564fb8ac1347aab97d000669cc6'],
   ['Mage.glb', 'cf898585da33fab50c724d31605fb931eb2912e6d2280092141e98ca81ad507d']
@@ -36,6 +47,26 @@ function parseGlbJson(buffer, fileName) {
   return JSON.parse(buffer.toString('utf8', 20, 20 + jsonLength).trim());
 }
 
+function parseSceneResources(sceneText, scenePath) {
+  const resources = new Map();
+  for (const line of sceneText.match(/^\[ext_resource[^\]]*\]$/gm) ?? []) {
+    const resourcePath = line.match(/\bpath="([^"]+)"/)?.[1];
+    const id = line.match(/\bid="([^"]+)"/)?.[1];
+    assert.ok(resourcePath && id, `${scenePath} has a path and id for every external resource`);
+    assert.ok(resourcePath.startsWith('res://'), `${scenePath} resource ${id} uses a project-relative res:// path`);
+    const absolutePath = path.resolve(clientDirectory, ...resourcePath.slice('res://'.length).split('/'));
+    assert.ok(absolutePath.startsWith(`${clientDirectory}${path.sep}`), `${scenePath} resource ${resourcePath} stays inside client`);
+    assert.ok(existsSync(absolutePath), `${scenePath} resource ${id} exists: ${resourcePath}`);
+    resources.set(id, resourcePath);
+  }
+
+  const referencedIds = [...sceneText.matchAll(/ExtResource\("([^"]+)"\)/g)].map(match => match[1]);
+  for (const id of referencedIds) {
+    assert.ok(resources.has(id), `${scenePath} refers to declared external resource ${id}`);
+  }
+  return [...resources.values()];
+}
+
 test('KayKit GLBs match audited hashes, contain their textured 41-joint rigs and the 76 audited clips', async () => {
   for (const [fileName, expectedHash] of expectedAssets) {
     const bytes = await readFile(path.join(assetDirectory, fileName));
@@ -43,7 +74,11 @@ test('KayKit GLBs match audited hashes, contain their textured 41-joint rigs and
 
     const gltf = parseGlbJson(bytes, fileName);
     assert.equal(gltf.asset.version, '2.0');
-    assert.ok(gltf.images?.some(image => image.mimeType === 'image/png' && Number.isInteger(image.bufferView)), `${fileName} embeds a PNG image`);
+    const embeddedPngIndex = gltf.images?.findIndex(image => image.mimeType === 'image/png' && Number.isInteger(image.bufferView)) ?? -1;
+    assert.notEqual(embeddedPngIndex, -1, `${fileName} embeds a PNG image`);
+    assert.ok(gltf.textures?.some(texture => texture.source === embeddedPngIndex), `${fileName} references its embedded PNG from a texture`);
+    assert.ok(gltf.materials?.length > 0, `${fileName} has at least one material`);
+    assert.ok(gltf.meshes?.some(mesh => mesh.primitives?.some(primitive => Number.isInteger(primitive.material))), `${fileName} meshes reference materials`);
     assert.ok(gltf.skins?.some(skin => skin.name === 'Rig' && skin.joints.length === 41), `${fileName} has the inspected Rig with 41 joints`);
     const animationNames = gltf.animations.map(animation => animation.name);
     assert.deepEqual(animationNames, expectedAnimations, `${fileName} animation names and order`);
@@ -72,7 +107,25 @@ test('the isolated scene uses both real models without replacing the official st
   assert.match(actorScript, /Walking_A/);
   assert.match(actorScript, /Running_A/);
   assert.match(actorScript, /if \(!PlayerControlled \|\| @event is not InputEventMouseButton/);
+  assert.match(actorScript, /required visual model is missing/i);
   assert.match(cameraScript, /class DemoCamera : Camera3D/);
+});
+
+test('required GLBs, source/license, and every external scene reference exist at their published paths', async () => {
+  for (const [scenePath, expectedResources] of expectedSceneResources) {
+    const sceneText = await readFile(path.join(clientDirectory, scenePath), 'utf8');
+    assert.deepEqual(parseSceneResources(sceneText, scenePath), expectedResources, `${scenePath} external resources`);
+  }
+
+  for (const relativePath of [
+    'Scenes/Bootstrap.tscn',
+    'Assets/Characters/KayKitAdventurers/Barbarian.glb',
+    'Assets/Characters/KayKitAdventurers/Mage.glb',
+    'Assets/Characters/KayKitAdventurers/LICENSE.txt',
+    'Assets/Characters/KayKitAdventurers/SOURCE.md'
+  ]) {
+    assert.ok(existsSync(path.join(clientDirectory, relativePath)), `client/${relativePath} exists`);
+  }
 });
 
 test('KayKit CC0 license and provenance/hash/animation audit are retained beside the models', async () => {
