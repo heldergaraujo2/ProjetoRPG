@@ -109,3 +109,11 @@
 - Smoke test cobre dois clientes, presença e chat; o join ignora destino `mapId` fornecido pelo cliente e fixa spawn inicial no servidor.
 - Adicionado `npm run doctor`, diagnóstico reproduzível de ferramentas alvo; saída desta sessão confirma Godot/.NET ausentes (falha esperada, não build).
 - **Não implementado nesta etapa:** autenticação, persistência, cliente 3D, servidor .NET, inventário, atributos distribuíveis ou controles mouse; fases de gameplay permanecem pendentes.
+
+
+## 2026-10-29 — Port visual do Character Selector publicado
+
+- Adicionada cena isolada de palco 3D e controlador C# para alternar entre Barbarian/Mage existentes, com câmera, base e iluminação inspiradas no seletor do template.
+- Registrados README de integração e aviso MIT do código-fonte consultado.
+- Não foram copiados os sistemas de rede/autoloads do template. A cena principal de conta/lobby e o backend permanecem intactos.
+- Build e inspeção visual no Godot 4.7.2 Mono ainda precisam ser executados na cópia Windows de testes.
