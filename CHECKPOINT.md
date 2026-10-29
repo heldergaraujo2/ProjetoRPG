@@ -1,3 +1,21 @@
+# VALIDAÇÃO WINDOWS — CHECK/BUILD/INTEGRAÇÃO FASE 1 APROVADOS — 2026-10-29
+
+## Evidência enviada pelo usuário
+
+Na cópia descartável `D:\\ProjetoRPG-Teste-Lobby`, após avançar por fast-forward para o commit remoto `183d9ae2c482b67b3bd54f108aa8ce6a2409973c`, o usuário executou:
+
+- `npm run check`: **21/21 testes passaram, 0 falharam**. Inclui testes do contrato de conta/lobby, catálogo de dados e smoke do protótipo legado HTTP/WebSocket; não equivale a teste visual da cena nem a chamadas reais disparadas pelo cliente Godot.
+- `dotnet build .\\server\\ProjetoRpg.Server.csproj`: **sucesso**, Shared `net8.0` e Server `net10.0`.
+- `npm run test:phase1`: **`PHASE1_INTEGRATION_OK`** usando Docker Engine `29.8.2` e imagem PostgreSQL `18.6` com digest `sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5`. O runner informou sucesso em aplicar/rollback/reaplicar migrations; readiness versus liveness; configuração validada; registro/login; erros genéricos de credencial; hash de senha ASP.NET Identity; sessões hashadas, revogáveis e expirantes; ownership/persistência de personagens; audit events e smoke WebSocket.
+- O cliente já havia passado anteriormente em `dotnet build .\\client\\ProjetoRpg.Client.csproj --no-restore` e `npm run test:target:client`, com `GODOT_CLIENT_SMOKE_OK` em Godot `4.7.2.stable.mono.official.ed1daf0bf`.
+- O Node do ambiente é `v24.20.0`, fora da faixa declarada no `package.json` (`>=22.22.3 <23`); os avisos `MODULE_TYPELESS_PACKAGE_JSON` são não bloqueantes. Registrar a divergência de versão, mas não misturar uma alteração de configuração Node com esta validação.
+
+**Conclusão permitida:** a suíte Node, a compilação do servidor e a integração automatizada PostgreSQL passaram na cópia Windows de teste; o smoke headless do cliente também passou anteriormente. **Ainda pendente:** teste visual do lobby e execução dos fluxos de cadastro/login/listagem/seleção/criação/logout do cliente Godot contra o servidor local. Não há gameplay/MMORPG jogável: entrada no mundo continua desabilitada e não há sessão de mundo/spawn/movimento autoritativos implementados.
+
+**Próximo passo:** seguir a seção 6 de `docs/WINDOWS_SETUP.md` com PostgreSQL descartável. Como `npm run test:phase1` usa banco/container efêmero, não executar rollback manual no ambiente do usuário. Depois iniciar o servidor local de desenvolvimento, configurar `PROJETORPG_SERVER_URL=http://127.0.0.1:5050` apenas no processo/editor de teste, abrir `client/project.godot` com Godot 4.7.2 Mono e validar visualmente o lobby e os fluxos descritos no guia. Não salvar senha, token ou connection string em arquivos versionados.
+
+---
+
 # VALIDAÇÃO WINDOWS — BUILD DO CLIENTE E SMOKE GODOT APROVADOS — 2026-10-29
 
 ## Evidência enviada pelo usuário
