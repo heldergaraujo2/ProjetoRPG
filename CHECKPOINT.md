@@ -596,3 +596,35 @@ Snapshot histórico anterior à validação da Fase 1 no Windows: a confirmaçã
 ### Próximo objetivo — Fase 1: validação e endurecimento
 
 Gerar e versionar `server/packages.lock.json` com restore real; compilar o server; executar `npm run test:phase1` com Docker/PostgreSQL; corrigir falhas; então executar o teste separado de 100 conexões ociosas. Depois implementar/revisar grants mínimos de DB, rate limiting distribuído conforme necessidade, revogação em massa/rotação quando o produto exigir, retenção de audit, backup/restore e documentação de operação. Não marcar Fase 1 concluída até cobrir integralmente os critérios do README.
+
+
+---
+
+# AUDITORIA DIRETA DO TEMPLATE GODOT 4 — 2026-10-29
+
+## Resultado desta retomada
+
+- Acesso ao repositório oficial confirmado: `heldergaraujo2/ProjetoRPG`; permissão GitHub de push confirmada; branch `arena/b2f4e6da-projetorpg` localizada.
+- Lidos o checkpoint, changelog, documento de integração e os arquivos atuais do lobby C# e suas cenas.
+- O documento `docs/INTEGRACAO_TEMPLATE_GODOT4_CHARACTER_SELECTOR.md` já estava publicado e foi usado como ponto de partida; a auditoria abaixo aprofundou as cenas reais da fonte.
+- Fonte examinada: `MacdonaldRobinson/godot4-3d-characters`, branch `main`; código MIT, Copyright (c) 2022 emirthab. O tamanho reportado pelo GitHub é 826.527 KB (~807 MiB).
+- Arquivos-fonte lidos: CharacterSelector.tscn/.gd, Lobby.tscn/.gd, characters/character.tscn, character.gd, character_stats.gd, characters/kaya/kaya.tscn, ui/Theme.tres, project.godot, README.md e LICENSE.
+
+## Descoberta que altera o plano
+
+O template não entrega o cenário medieval/MMORPG visual esperado. O Character Selector é uma plataforma CSG simples com dois personagens e formulário; o Lobby é outra plataforma simples com UI host/join ENet e seletor de mapas. A cena do personagem traz dependências extensas (Character/CharacterStats, animações GLB, câmera, health bar, áudio, efeitos, scripts de combate/interação). Os scripts chamam GameState/NetworkState e usam estado/estatísticas de demonstração. Importar essas cenas literalmente duplicaria sistemas e poderia mostrar dados fictícios.
+
+**Decisão:** não copiar as cenas originais nem o projeto inteiro. Não clonar os ~807 MiB sem necessidade. Não copiar modelos/animações/sons/texturas/addons enquanto as licenças individuais não forem comprovadas. Considerar somente portar um comportamento de câmera/seleção se houver ganho claro, mantendo C# e API autoritativa do ProjetoRPG; em paralelo, avaliar cenário 3D alternativo com licenças explícitas.
+
+## O que está e não está feito
+
+- Auditoria estática das cenas e scripts da fonte: concluída.
+- Licença MIT do código: confirmada.
+- Integração/cópia de assets: NÃO realizada.
+- Clone local em `D:\godot4-3d-characters-review`: não confirmado, pois o agente não acessa o Windows.
+- Build/import Godot/teste visual após integração: NÃO executados.
+- Arquitetura de conta/personagens/rede do ProjetoRPG: preservada nesta sessão.
+
+## Próxima tarefa
+Verificar no Windows se o clone temporário existe, sem sobrescrever nem apagar nada. Como a inspeção remota já foi suficiente para rejeitar a importação integral, só clonar seletivamente se for necessário inspecionar um recurso específico. Depois decidir entre portar somente uma interação/câmera útil ou selecionar um cenário de lobby realmente adequado e com licenças de assets verificáveis. Manter o botão “Entrar no mundo” desabilitado até haver operação autoritativa de gameplay.
+
