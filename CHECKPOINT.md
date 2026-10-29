@@ -1,10 +1,18 @@
 # CHECKPOINT — continuidade do ProjetoRPG
 
-**Atualizado:** 2026-10-28
+**Atualizado:** 2026-10-29
 **Fase oficial atual:** 1 — Fundação do servidor
 **Estado:** Fase 0 concluída. Fase 1 implementada parcialmente; build do servidor, restore em locked-mode e testes de integração PostgreSQL confirmados no Windows em 2026-10-28. Fase 1 permanece EM ANDAMENTO, pendente da revisão integral dos critérios e do teste de carga separado. A demo 3D isolada usa assets CC0 verificados; nesta retomada, `npm run test:target:client` ficou bloqueado no executor Linux (código 2, Godot ausente). Import/build e inspeção visual continuam pendentes, sem alterar o estado oficial das Fases 2/3.
 **Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
+
+## Cliente de conta/personagens integrado ao servidor — 2026-10-29
+
+- **Incremento real:** `Bootstrap.tscn` continua sendo a cena principal e passa a iniciar `AccountGateway` via `Bootstrap.cs`. O cliente implementa cadastro/login/lista/criação de personagem/logout via HTTP contra rotas já existentes no ASP.NET Core. Endpoint configurável por `PROJETORPG_SERVER_URL`, fallback `http://127.0.0.1:5050`; HTTP é permitido só para loopback e servidores remotos exigem HTTPS. Cadastro respeita resposta genérica 202; personagem é criado sem classe (catálogo segue vazio); a lista vem da conta autenticada e pode ser atualizada.
+- **Segurança/limites:** senha mascarada e apagada após envio; bearer fica somente em memória, não é exibido, gravado ou logado; servidor segue autoridade para autenticação, ownership, unicidade e validação. UI trata erros HTTP/rede, 429 e sessão expirada com nova tentativa. O cliente não entra em mundo, não instancia o personagem escolhido em 3D e não movimenta/sincroniza entidades. Não é multiplayer ou gameplay online. `CharacterDemo.tscn`, atores, GLBs, licença e procedência não foram alterados; `Bootstrap.tscn` continua configurado como cena principal.
+- **Validação neste executor:** `npm ci` instalou a dependência já declarada (`ws`), sem vulnerabilidades; `npm run check` passou **19/19** testes Node e verificações de sintaxe. O teste novo de conta valida apenas contratos/referências estáticas; GLBs/cenas também são verificados estaticamente. `git diff --cached --check` passou para a entrega preparada. `npm run test:target:client` foi executado e ficou bloqueado com código 2 porque Godot 4 .NET não está disponível. Não foi possível importar/compilar C#, executar a interface nem fazer uma chamada real cliente→servidor neste executor. Não declarar Fase 2 concluída.
+- **Estado oficial e pendências:** Fase 1 permanece EM ANDAMENTO (teste real separado de 100 WebSockets ociosos ainda pendente); a Fase 2 também permanece aberta, pois falta validar o fluxo no Godot contra servidor/banco de teste e entregar entrada em mundo. Nenhuma fase foi marcada como concluída. A validação visual adiada da orientação do Barbarian continua pendente e não foi usada como bloqueio.
+- **Próximo passo exato:** no Windows com a toolchain já referida, executar `npm run test:target:client`; subir servidor migrado com banco descartável/de teste; definir `PROJETORPG_SERVER_URL` se diferente do fallback; validar cadastro→login→criar/listar/selecionar personagem→logout e respostas para credenciais inválidas, nome duplicado, sessão expirada, servidor indisponível/retry; não usar banco de produção. Depois, implementar a entrada de mundo e movimento autoritativo da Fase 3 com teste de integração de dois clientes. A carga ociosa de 100 segue independente.
 
 ## Orientação e sincronização do movimento 3D — 2026-10-29
 
