@@ -1,0 +1,51 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/TemplateCharacterSelectorStage.cs" id="1_stage"]
+
+[sub_resource type="Environment" id="Environment_stage"]
+background_mode = 1
+background_color = Color(0.018, 0.035, 0.061, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.38, 0.57, 0.62, 1)
+ambient_light_energy = 0.8
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_plinth"]
+top_radius = 0.52
+bottom_radius = 0.58
+height = 0.16
+radial_segments = 48
+
+[node name="TemplateCharacterSelectorStage" type="Node3D"]
+script = ExtResource("1_stage")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_stage")
+
+[node name="Plinth" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.13, 0)
+mesh = SubResource("CylinderMesh_plinth")
+
+[node name="CharacterRoot" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 3.15, 10.6)
+current = true
+fov = 30.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-43, -28, 0)
+light_color = Color(0.78, 0.88, 1, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(-3, 3.1, 1.2)
+light_color = Color(0.24, 0.78, 0.72, 1)
+light_energy = 0.8
+omni_range = 9.0
+
+[node name="NameLabel" type="Label3D" parent="."]
+position = Vector3(0, 0.08, -0.8)
+font_size = 42
+outline_size = 8
+text = "PERSONAGEM"
