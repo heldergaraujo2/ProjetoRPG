@@ -1,3 +1,19 @@
+# VALIDAÇÃO WINDOWS — BUILD DO CLIENTE E SMOKE GODOT APROVADOS — 2026-10-29
+
+## Evidência enviada pelo usuário
+
+Na cópia descartável `D:\\ProjetoRPG-Teste-Lobby`, com commit remoto `9291f1b` (correções C# já presentes), o usuário executou:
+
+- `dotnet build .\\client\\ProjetoRpg.Client.csproj --no-restore`: **sucesso**, Shared `net8.0` e Client `net8.0` compilados sem erros.
+- `npm run test:target:client`, com `GODOT_BIN` apontando para Godot `4.7.2.stable.mono.official.ed1daf0bf`: **`GODOT_CLIENT_SMOKE_OK`**; importação/build headless e inicialização da cena Bootstrap passaram.
+- Node reportado anteriormente no mesmo ambiente: `v24.20.0`, npm `11.19.0`; `npm ci` instalou dependências com aviso `EBADENGINE`, pois o projeto requer Node `>=22.22.3 <23`. Aviso do `MODULE_TYPELESS_PACKAGE_JSON` durante o smoke foi não bloqueante.
+
+Após executar o editor/build, `git status --short` mostrou quatro metadados `.glb.import/.png.import` modificados e dois arquivos `.uid` não rastreados. Esses arquivos permanecem apenas na cópia Windows de teste; não foram commitados nem descartados. Inspecionar diffs antes de decidir se são metadados gerados/necessários.
+
+**Conclusão permitida:** o cliente compila e o smoke headless de Bootstrap passa nesta máquina. **Não concluído:** validação visual do lobby, login contra backend real, lista/seleção/criação/logout com PostgreSQL, e gameplay. Próximo passo é confirmar Docker disponível e seguir a seção 6 de `docs/WINDOWS_SETUP.md` para PostgreSQL descartável e servidor local; configurar `PROJETORPG_SERVER_URL=http://127.0.0.1:5050` apenas no processo de teste e abrir `client/project.godot` pelo editor Godot 4.7.2 Mono.
+
+---
+
 # CORREÇÃO APÓS PRIMEIRO BUILD DO LOBBY — 2026-10-29
 
 ## Evidência do teste Windows e correções publicadas
