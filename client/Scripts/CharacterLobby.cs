@@ -145,7 +145,12 @@ public partial class CharacterLobby : Control
         page.AddChild(header);
         var title = AddLabel(header, "PROJETORPG  /  SALÃO DE PERSONAGENS", 22);
         title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        AddLabel(header, "Prévia visual genérica · sem dados de gameplay", 13);
+        var subtitle = AddLabel(header, "Prévia visual genérica · sem dados de gameplay", 13);
+        subtitle.CustomMinimumSize = new Vector2(340, 0);
+        subtitle.SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+        subtitle.HorizontalAlignment = HorizontalAlignment.Right;
+        subtitle.VerticalAlignment = VerticalAlignment.Center;
+        subtitle.AutowrapMode = TextServer.AutowrapMode.Off;
 
         var body = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         body.AddThemeConstantOverride("separation", 18);
@@ -222,12 +227,14 @@ public partial class CharacterLobby : Control
         _status.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         _status.SizeFlagsVertical = SizeFlags.ShrinkCenter;
         _enterWorldButton = AddButton(footer, "Entrar no mundo — indisponível", () => { });
+        _enterWorldButton.CustomMinimumSize = new Vector2(240, 40);
         _enterWorldButton.Disabled = true;
         _enterWorldButton.TooltipText = "O servidor ainda não oferece uma operação autoritativa de entrada no mundo.";
         _logoutButton = AddButton(footer, "Trocar conta / sair", () =>
         {
             if (!_busy) LogoutRequested?.Invoke();
         });
+        _logoutButton.CustomMinimumSize = new Vector2(170, 40);
     }
 
     private void BuildPreviewWorld()
@@ -245,25 +252,7 @@ public partial class CharacterLobby : Control
         AddStageMesh(new CylinderMesh { TopRadius = 0.62f, BottomRadius = 0.62f, Height = 0.045f, RadialSegments = 48 },
             new Vector3(0, -0.235f, 0), new Color(0.18f, 0.31f, 0.34f), metallic: 0.6f);
 
-        for (var index = 0; index < 8; index++)
-        {
-            var angle = Mathf.Tau * index / 8.0f;
-            var pillar = new MeshInstance3D
-            {
-                Mesh = new CylinderMesh { TopRadius = 0.16f, BottomRadius = 0.23f, Height = 2.4f, RadialSegments = 16 },
-                Position = new Vector3(Mathf.Cos(angle) * 4.4f, 0.8f, Mathf.Sin(angle) * 4.4f),
-                MaterialOverride = MakeMaterial(new Color(0.11f, 0.19f, 0.24f), 0.42f)
-            };
-            _previewRoot.AddChild(pillar);
-            var crown = new MeshInstance3D
-            {
-                Mesh = new SphereMesh { Radius = 0.24f, Height = 0.48f, RadialSegments = 16, Rings = 8 },
-                Position = pillar.Position + new Vector3(0, 1.25f, 0),
-                MaterialOverride = MakeMaterial(new Color(0.24f, 0.68f, 0.65f), 0.24f)
-            };
-            _previewRoot.AddChild(crown);
-        }
-
+        // Keep the preview silhouette unobstructed: no surrounding pillars/orbs.
         var keyLight = new DirectionalLight3D
         {
             RotationDegrees = new Vector3(-43, -28, 0),
@@ -283,13 +272,13 @@ public partial class CharacterLobby : Control
         var camera = new Camera3D
         {
             // Frontal, elevated and distant framing inspired by classic MMORPG character halls.
-            Position = new Vector3(0, 3.45f, 12.8f),
+            Position = new Vector3(0, 3.15f, 10.6f),
             Current = true,
-            Fov = 32
+            Fov = 30
         };
         // LookAt requires the node to be inside the scene tree.
         _previewRoot.AddChild(camera);
-        camera.LookAt(new Vector3(0, 1.15f, 0), Vector3.Up);
+        camera.LookAt(new Vector3(0, 1.3f, 0), Vector3.Up);
     }
 
     private void SelectCharacter(CharacterSummary character)
@@ -335,7 +324,7 @@ public partial class CharacterLobby : Control
 
         model.Name = "CharacterModelPreview";
         // Scale only the preview instance; the imported asset remains untouched.
-        model.Scale = new Vector3(1.35f, 1.35f, 1.35f);
+        model.Scale = new Vector3(1.5f, 1.5f, 1.5f);
         model.Position = Vector3.Zero;
         _previewRoot.AddChild(model);
         _figure = model;
