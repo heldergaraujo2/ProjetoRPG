@@ -109,3 +109,12 @@ if (Test-Path $review) {
 }
 ```
 Não sobrescrever diretório existente. Como a inspeção GitHub já confirmou que a cena de origem é simples e acoplada, só fazer clone seletivo se uma revisão de recursos específicos for necessária.
+
+
+## Atualização de implementação — 2026-10-29
+
+Foi publicado um primeiro port do **palco visual** do Character Selector em `client/Scenes/ImportedLobby/TemplateCharacterSelectorStage.tscn`, controlado por `client/Scripts/TemplateCharacterSelectorStage.cs`. A cena instancia os modelos KayKit existentes (Barbarian/Mage), permite alternar com as setas e inclui palco, câmera e iluminação. README e aviso MIT também foram adicionados.
+
+**Escopo:** porta a experiência visual básica de seleção. Não importa o sistema Multiplayer do template, que depende de GameState/NetworkState/ENet/MultiplayerScene e mundos próprios incompatíveis com a arquitetura atual. A tela principal `CharacterLobby.tscn` continua preservada e conectada à conta. A nova cena é isolada e ainda não foi validada por build/execução local.
+
+Próximo passo: atualizar `D:\ProjetoRPG-Teste-Lobby`, compilar o cliente e abrir `res://Scenes/ImportedLobby/TemplateCharacterSelectorStage.tscn` no Godot 4.7.2 Mono. Não atualizar a pasta original.
