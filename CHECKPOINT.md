@@ -628,3 +628,13 @@ O template não entrega o cenário medieval/MMORPG visual esperado. O Character 
 ## Próxima tarefa
 Verificar no Windows se o clone temporário existe, sem sobrescrever nem apagar nada. Como a inspeção remota já foi suficiente para rejeitar a importação integral, só clonar seletivamente se for necessário inspecionar um recurso específico. Depois decidir entre portar somente uma interação/câmera útil ou selecionar um cenário de lobby realmente adequado e com licenças de assets verificáveis. Manter o botão “Entrar no mundo” desabilitado até haver operação autoritativa de gameplay.
 
+
+
+# PORT VISUAL DO CHARACTER SELECTOR — PUBLICADO NO GITHUB — 2026-10-29
+
+- Adicionada a cena isolada `client/Scenes/ImportedLobby/TemplateCharacterSelectorStage.tscn` e o controlador C# `client/Scripts/TemplateCharacterSelectorStage.cs`.
+- O palco usa os GLBs Barbarian/Mage já existentes, base compacta, câmera frontal elevada, iluminação e alternância por setas esquerda/direita.
+- Incluídos README e aviso MIT original em `client/Scenes/ImportedLobby/`.
+- Este é um port visual independente, não a importação integral do demo: não traz autoloads, ENet, MultiplayerScene, mundos ou addons do template. A tela principal `res://Scenes/CharacterLobby.tscn` e a API de conta/personagens permanecem preservadas.
+- A nova cena é executável isoladamente para avaliação visual. Entrada no mundo continua desabilitada.
+- **Validação pendente no PC:** atualizar a branch, compilar o cliente e abrir a cena no Godot 4.7.2 Mono. Esta publicação não equivale a build/teste visual confirmado.
