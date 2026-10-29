@@ -59,14 +59,16 @@ public partial class AccountGateway : Control
             OffsetBottom = 190
         };
         AddChild(_authenticationPanel);
-        var layout = new VBoxContainer { Separation = 12 };
+        var layout = new VBoxContainer();
+        layout.AddThemeConstantOverride("separation", 12);
         _authenticationPanel.AddChild(layout);
         AddLabel(layout, "PROJETORPG", 28);
         AddLabel(layout, "Acesse sua conta para abrir o salão de personagens.", 15);
         _username = AddLineEdit(layout, "Usuário (3–32 caracteres)");
         _password = AddLineEdit(layout, "Senha (12–128 caracteres)");
         _password.Secret = true;
-        var buttons = new HBoxContainer { Separation = 10 };
+        var buttons = new HBoxContainer();
+        buttons.AddThemeConstantOverride("separation", 10);
         layout.AddChild(buttons);
         _registerButton = AddButton(buttons, "Criar conta", OnRegisterPressed);
         _loginButton = AddButton(buttons, "Entrar", OnLoginPressed);
@@ -79,7 +81,7 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { username = _username.Text.Trim(), password = _password.Text }, _jsonOptions);
-            var response = await _api.SendAsync(HttpClient.Method.Post, "/api/v1/accounts/register", body);
+            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/accounts/register", body);
             if (!IsNetworkSuccess(response))
             {
                 SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
@@ -101,7 +103,7 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { username = _username.Text.Trim(), password = _password.Text }, _jsonOptions);
-            var response = await _api.SendAsync(HttpClient.Method.Post, "/api/v1/sessions", body);
+            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/sessions", body);
             if (!IsNetworkSuccess(response))
             {
                 SetStatus("Não foi possível alcançar o servidor. Confirme o serviço e tente novamente.", true);
@@ -161,7 +163,7 @@ public partial class AccountGateway : Control
         await RunBusyAsync(async () =>
         {
             var body = JsonSerializer.Serialize(new { name, classId = (string?)null }, _jsonOptions);
-            var response = await _api.SendAsync(HttpClient.Method.Post, "/api/v1/characters", body, _accessToken);
+            var response = await _api.SendAsync(Godot.HttpClient.Method.Post, "/api/v1/characters", body, _accessToken);
             if (!IsNetworkSuccess(response))
             {
                 _lobby.SetStatus("Não foi possível alcançar o servidor. O personagem não foi confirmado; tente novamente.", true);
@@ -202,7 +204,7 @@ public partial class AccountGateway : Control
             {
                 try
                 {
-                    var response = await _api.SendAsync(HttpClient.Method.Delete, "/api/v1/sessions/current", bearerToken: token);
+                    var response = await _api.SendAsync(Godot.HttpClient.Method.Delete, "/api/v1/sessions/current", bearerToken: token);
                     serverRevoked = IsNetworkSuccess(response) &&
                         (response.StatusCode == (long)HttpStatusCode.NoContent || response.StatusCode == (long)HttpStatusCode.Unauthorized);
                 }
@@ -227,7 +229,7 @@ public partial class AccountGateway : Control
         ApiResponse response;
         try
         {
-            response = await _api.SendAsync(HttpClient.Method.Get, "/api/v1/characters", bearerToken: _accessToken);
+            response = await _api.SendAsync(Godot.HttpClient.Method.Get, "/api/v1/characters", bearerToken: _accessToken);
         }
         catch (Exception exception) when (exception is InvalidOperationException or TaskCanceledException or TimeoutException)
         {
