@@ -15,6 +15,7 @@ WalkSpeed = 2.8
 RunSpeed = 4.2
 RunDistanceThreshold = 5.0
 VisualScale = 1.0
+VisualYawCorrectionDegrees = 180.0
 TargetMarkerPath = NodePath("../TargetMarker")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

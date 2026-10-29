@@ -6,6 +6,14 @@
 **Branch ativa:** `arena/b2f4e6da-projetorpg` (base original `40e8badd43ca28c17662944824a3c25335e22182`; não trocada). PR #1 está aberta contra `main`.
 **Checkpoint oficial importado:** `rpg-pack/CHECKPOINT.md` é histórico; este arquivo na raiz é a única fonte operacional.
 
+## Orientação e sincronização do movimento 3D — 2026-10-29
+
+- Corrigi o sintoma reportado no Windows: Barbarian tocava `Walking_A` mas o visual parecia andar de costas. Inspeção direta do GLB: geometria facial de `Barbarian_Head` aponta para local **-Z**; nós `Rig`/`root` não possuem yaw de 180° no repouso. `Walking_A` é in-place: root sem movimento X/Z e sem yaw animado. Portanto o clipe não altera o rumo do ator.
+- O código mantém `offset = destino - posição`, normaliza a direção, usa-a no `Velocity` e chama `LookAt(GlobalPosition + direction, Vector3.Up)`. Em Godot, `LookAt` com o default `use_model_front=false` orienta o -Z local ao alvo. Não inverti o vetor nem mudei o destino ou a colisão.
+- Adicionei `VisualYawCorrectionDegrees` ao ator e apliquei 180° somente ao nó visual importado do Barbarian; `CharacterBody3D` segue controlando orientação/movimento e retém a colisão. O Player da demo usa 180°; o NPC Mage é explicitamente 0° e fica inalterado. O giro não toca nas animações.
+- Testes estáticos atualizados para conferir correção por ator, rota visual isolada, rumo LookAt e velocidade baseada no mesmo vetor posição→destino, além de parada/idle. `node --test test/godot-character-demo.test.js` passou 4/4; `node --check` e `git diff --check` passaram. `npm run test:target:client` continua bloqueado com código 2 por ausência de Godot 4 .NET neste executor.
+- **Limite:** a correção ainda precisa de validação visual no Windows 4.7.2 Mono. Não afirmar o problema resolvido até abrir `CharacterDemo.tscn` com F6, confirmar que o Barbarian encara/caminha em direção ao destino e para, e verificar Output/Debugger. A cena principal permanece Bootstrap; Mage/carga/DB/servidor não foram alterados.
+
 ## Recuperação e publicação da demo 3D — 2026-10-29
 
 - Após buscar `origin/arena/b2f4e6da-projetorpg`, recuperei do workspace os artefatos reais da demo: `CharacterDemo.tscn`, `CharacterActor.tscn`, `CharacterActor.cs`, `DemoCamera.cs`, dois GLBs KayKit, licença CC0, auditoria `SOURCE.md`, README do cliente e teste Node dedicado. A publicação foi preparada como continuação do branch remoto `3396fce`; arquivos locais não relacionados não foram incluídos.

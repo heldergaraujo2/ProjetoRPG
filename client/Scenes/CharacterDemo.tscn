@@ -49,12 +49,14 @@ shape = SubResource("Arena_shape")
 position = Vector3(-3, 0, 3)
 PlayerControlled = true
 ModelScene = ExtResource("3_barbarian")
+VisualYawCorrectionDegrees = 180.0
 TargetMarkerPath = NodePath("../TargetMarker")
 
 [node name="NPC" parent="." instance=ExtResource("2_actor_scene")]
 position = Vector3(3, 0, -1)
 PlayerControlled = false
 ModelScene = ExtResource("4_mage")
+VisualYawCorrectionDegrees = 0.0
 TargetMarkerPath = NodePath("")
 
 [node name="NpcTag" type="Label3D" parent="NPC"]

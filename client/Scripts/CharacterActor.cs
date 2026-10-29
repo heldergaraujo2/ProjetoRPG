@@ -14,6 +14,7 @@ public partial class CharacterActor : CharacterBody3D
     [Export] public float RunSpeed { get; set; } = 4.2f;
     [Export] public float RunDistanceThreshold { get; set; } = 5.0f;
     [Export] public float VisualScale { get; set; } = 1.0f;
+    [Export] public float VisualYawCorrectionDegrees { get; set; } = 0.0f;
     [Export] public NodePath TargetMarkerPath { get; set; } = new("../TargetMarker");
 
     private AnimationPlayer? _animationPlayer;
@@ -41,6 +42,9 @@ public partial class CharacterActor : CharacterBody3D
 
         model.Name = "VisualModel";
         model.Scale = Vector3.One * VisualScale;
+        // Keep any yaw correction on the visual import only. The CharacterBody3D
+        // root continues to own movement, LookAt, and the collision shape.
+        model.RotateY(Mathf.DegToRad(VisualYawCorrectionDegrees));
         AddChild(model);
         _animationPlayer = FindAnimationPlayer(model);
         _targetMarker = GetNodeOrNull<Node3D>(TargetMarkerPath);

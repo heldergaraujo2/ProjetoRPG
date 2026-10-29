@@ -19,6 +19,13 @@ Esta cena é uma demonstração isolada, fora da cena inicial `client/Scenes/Boo
 - **Cena principal oficial:** permanece `Bootstrap.tscn`; não foi substituída.
 - **Modelos, licença, hashes e inventário dos clipes:** [`client/Assets/Characters/KayKitAdventurers/SOURCE.md`](../client/Assets/Characters/KayKitAdventurers/SOURCE.md).
 
+## Investigação da orientação e correção de movimento — 2026-10-29
+
+- Inspecionei o `Barbarian.glb` diretamente, não só o nome do arquivo: a geometria facial do nó `Barbarian_Head` apresenta a face para o eixo local **-Z**; o nó `Rig` e o osso `root` não trazem yaw de 180° no repouso. `Walking_A` é uma animação in-place: o `root` não aplica deslocamento X/Z nem uma rotação que redirecione o personagem. Os passos e a pose vêm dos ossos.
+- O cálculo existente usa `offset = destino - posição`, normaliza esse vetor e usa a mesma direção em `Velocity`. `LookAt(target, up)` sem `use_model_front` usa a convenção Godot de apontar o **-Z local** para o alvo; portanto não inverti o vetor nem redirecionei a raiz. A chegada/idle continua sendo determinada pelo limite de distância `0.08`.
+- O sintoma reproduzido no Windows indica que o visual importado está efetivamente de costas em relação ao heading do `CharacterBody3D`, embora a raiz siga o destino. A correção foi isolada no nó visual instanciado: `VisualYawCorrectionDegrees = 180` para o Barbarian, enquanto a raiz/cápsula e a direção de movimento não mudam. O NPC Mage recebe explicitamente `0` para manter sua orientação visual anterior. A rotação não toca nos ossos nem nos clipes.
+- A cobertura estática agora confere configuração 180°/0°, o uso de `RotateY` apenas no modelo, a convenção de `LookAt`, o vetor posição→destino usado tanto para movimento quanto orientação e o limiar de parada. Isso valida a intenção do patch, **não** confirma o resultado visual no Godot.
+
 ## Instruções exatas para Windows — Godot 4.7.2 Mono
 
 ### Caminhos reais publicados
