@@ -277,8 +277,9 @@ public partial class CharacterLobby : Control
             Current = true,
             Fov = 34
         };
-        camera.LookAt(new Vector3(0, 1.05f, 0), Vector3.Up);
+        // LookAt requires the node to be inside the scene tree.
         _previewRoot.AddChild(camera);
+        camera.LookAt(new Vector3(0, 1.05f, 0), Vector3.Up);
     }
 
     private void SelectCharacter(CharacterSummary character)
