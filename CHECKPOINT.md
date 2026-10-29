@@ -1,3 +1,30 @@
+# CHECKPOINT — AJUSTE VISUAL DO LOBBY — 2026-10-29
+
+## Atualização publicada para teste Windows
+
+Branch: `arena/b2f4e6da-projetorpg`.
+
+- Removidos os pilares cilíndricos e as esferas decorativas que apareciam à frente/ao redor do personagem na captura visual do usuário.
+- Mantida a pequena base cilíndrica de exposição.
+- Câmera reposicionada para `(0, 3.15, 10.6)`, mirando `(0, 1.3, 0)`, FOV 30: enquadramento frontal e levemente elevado, mais próximo para dar destaque ao modelo.
+- Escala da instância de prévia ampliada de 1.35 para 1.5. Os arquivos GLB originais não foram modificados.
+- Subtítulo do cabeçalho recebeu largura mínima de 340 px, alinhamento à direita e quebra automática desativada para evitar texto vertical.
+- Botões inferiores receberam larguras mínimas explícitas: 240 px para “Entrar no mundo” (continua desabilitado) e 170 px para “Trocar conta / sair”.
+- Nenhuma alteração no servidor, banco, autenticação, DTOs, contrato de personagens ou `client/project.godot`.
+
+## Evidências e limites
+
+- O usuário confirmou que a revisão anterior compilou com sucesso em `D:\ProjetoRPG-Teste-Lobby` usando `dotnet build .\client\ProjetoRpg.Client.csproj`.
+- A captura posterior mostrou que o GLB carrega, mas oito pilares/esferas encobrem a silhueta e o subtítulo do cabeçalho está estreito a ponto de quebrar verticalmente.
+- **Esta nova revisão ainda não foi compilada nem executada no Windows.** A compilação e a inspeção visual devem ser feitas pelo usuário na pasta de teste. O agente não tem acesso direto ao caminho local `D:\ProjetoRPG-Teste-Lobby`; a publicação foi feita somente na branch remota de teste.
+- Preservar a pasta original `D:\AProjeto RPG Fixo`. Não sobrescrever `client/project.godot`, arquivos `.import` ou `.uid` locais.
+
+## Próximo passo para o usuário
+
+Na pasta `D:\ProjetoRPG-Teste-Lobby`, executar `git fetch origin` e restaurar somente `client/Scripts/CharacterLobby.cs` a partir de `origin/arena/b2f4e6da-projetorpg`; em seguida compilar com `dotnet build .\client\ProjetoRpg.Client.csproj`, abrir o editor Godot 4.7.2 Mono e rodar a cena. Se o resultado visual estiver bom, testar login, lista, seleção, criação, atualização e logout. Reportar a saída do build e uma nova captura. Não considerar a entrada no mundo implementada: o botão permanece deliberadamente desabilitado.
+
+---
+
 # VALIDAÇÃO WINDOWS — CHECK/BUILD/INTEGRAÇÃO FASE 1 APROVADOS — 2026-10-29
 
 ## Evidência enviada pelo usuário
