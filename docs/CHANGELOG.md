@@ -117,3 +117,12 @@
 - Registrados README de integração e aviso MIT do código-fonte consultado.
 - Não foram copiados os sistemas de rede/autoloads do template. A cena principal de conta/lobby e o backend permanecem intactos.
 - Build e inspeção visual no Godot 4.7.2 Mono ainda precisam ser executados na cópia Windows de testes.
+
+
+## 2026-10-29 — Retomada e auditoria remota do port visual
+
+- Confirmado HEAD remoto da branch `arena/b2f4e6da-projetorpg`: `b3b6f37481f64607e7e8c2fe625a300345f0b885`.
+- Verificados os commits do port (controlador, cena, README, aviso MIT, checkpoint, changelog e documento de integração) e a presença dos arquivos na branch.
+- Revisados estaticamente o controlador C#, a cena .tscn e o lobby principal. O port continua isolado; ainda não foi integrado a `CharacterLobby.cs`.
+- Nenhum build/import/teste visual foi executado nesta retomada; não há confirmação de atualização da cópia Windows. Nenhum arquivo local foi alterado.
+- Próximo passo: atualizar com fetch + fast-forward somente se a cópia de teste estiver na branch correta e limpa; compilar o cliente; executar a cena isolada e enviar captura. Integração ao lobby real somente após aprovação dessa etapa.
