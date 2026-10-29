@@ -1,3 +1,19 @@
+# CORREÇÃO APÓS PRIMEIRO BUILD DO LOBBY — 2026-10-29
+
+## Evidência do teste Windows e correções publicadas
+
+O primeiro build do cliente na cópia Windows `D:\\ProjetoRPG-Teste-Lobby` falhou: Shared `net8.0` compilou, mas o Client apresentou 13 erros em `AccountGateway.cs` e `CharacterLobby.cs`. As causas identificadas foram uso de `Separation` como propriedade C# inexistente nos containers e referências ambíguas a `HttpClient.Method` entre Godot e .NET.
+
+Foram publicadas na branch `arena/b2f4e6da-projetorpg` as seguintes correções:
+- `0be873f8b9b2f0baf428d1b195c8e3c3da843e12`: qualifica os métodos HTTP como `Godot.HttpClient.Method` e substitui os inicializadores de espaçamento no gateway por `AddThemeConstantOverride("separation", ...)`.
+- `52acf76c734a4adb6832eea23b54cdb5e3e5b2af`: ajusta os seis containers do lobby para configurar o espaçamento por `AddThemeConstantOverride("separation", ...)`.
+
+A leitura posterior dos arquivos remotos confirmou cinco chamadas HTTP qualificadas, seis overrides de espaçamento e nenhuma ocorrência restante de `Separation =` nos dois scripts. Isso é verificação estática dos arquivos publicados, **não** prova de compilação. As correções ainda precisam ser compiladas e testadas no Windows; não declarar o lobby funcional até esses testes passarem.
+
+O Windows reportou Node.js `24.20.0` e npm `11.19.0`, enquanto `package.json` exige Node `>=22.22.3 <23`. `npm ci` concluiu com aviso de engine incompatível. Antes dos testes Node finais, usar Node `22.22.3` e reinstalar dependências com `npm ci`.
+
+---
+
 # ATUALIZAÇÃO OPERACIONAL MAIS RECENTE — 2026-10-29 — Lobby preparado para validação Windows
 
 Esta seção descreve o conteúdo preparado para a ponte Arena.ai → GitHub → Windows. Ela não declara o lobby funcional: o build/import Godot e a validação visual continuam pendentes.
