@@ -638,3 +638,44 @@ Verificar no Windows se o clone temporário existe, sem sobrescrever nem apagar 
 - Este é um port visual independente, não a importação integral do demo: não traz autoloads, ENet, MultiplayerScene, mundos ou addons do template. A tela principal `res://Scenes/CharacterLobby.tscn` e a API de conta/personagens permanecem preservadas.
 - A nova cena é executável isoladamente para avaliação visual. Entrada no mundo continua desabilitada.
 - **Validação pendente no PC:** atualizar a branch, compilar o cliente e abrir a cena no Godot 4.7.2 Mono. Esta publicação não equivale a build/teste visual confirmado.
+
+
+# RETOMADA DO PORT VISUAL — AUDITORIA REMOTA — 2026-10-29
+
+## Verificação do GitHub
+
+- Repositório: `heldergaraujo2/ProjetoRPG`.
+- Branch consultada: `arena/b2f4e6da-projetorpg`.
+- HEAD remoto confirmado pela API de refs: `b3b6f37481f64607e7e8c2fe625a300345f0b885` (`docs: record 3D character selector port and test status`).
+- A cadeia de commits foi verificada: controlador `549a3d9`, cena `363ab5c`, README `59d1804`, licença `5510a15`, checkpoint `c6f5308`, changelog `48c12a4` e documentação de integração `b3b6f37`. Os arquivos do port estão presentes na branch.
+- Arquivos conferidos: `client/Scripts/TemplateCharacterSelectorStage.cs`, `client/Scenes/ImportedLobby/TemplateCharacterSelectorStage.tscn`, README e licença da pasta ImportedLobby, `client/Scripts/CharacterLobby.cs`, `client/Scenes/CharacterLobby.tscn`, `CHECKPOINT.md`, `docs/CHANGELOG.md`, `docs/INTEGRACAO_TEMPLATE_GODOT4_CHARACTER_SELECTOR.md`, `docs/WINDOWS_SETUP.md` e `README.md`.
+
+## Auditoria do port publicado
+
+- O controlador C# carrega os GLBs locais Barbarian/Mage, usa `ui_left/ui_right`, aplica escala 1.5 e atualiza o Label3D.
+- A cena contém WorldEnvironment, base cilíndrica, câmera, luz direcional, luz de preenchimento e Label3D. A cena está isolada e não possui dependência de GameState/NetworkState/ENet.
+- O lobby principal continua sendo `CharacterLobby.tscn`; seu script continua construindo a prévia por conta própria e ligado ao fluxo de personagens. A cena importada ainda NÃO foi conectada ao lobby principal.
+- O código remoto foi inspecionado estaticamente. Nenhum build foi executado pelo agente e não há evidência de que o usuário já tenha atualizado a cópia Windows ou executado a cena. Não declarar compilação, importação ou validação visual do novo port.
+- Nenhum arquivo local do Windows foi acessado. Nenhuma alteração foi feita em `D:\\AProjeto RPG Fixo` ou em `D:\\ProjetoRPG-Teste-Lobby`.
+
+## Próxima ação obrigatória — atualizar a cópia descartável
+
+No PowerShell, executar primeiro a verificação segura de branch e working tree, seguida de fetch e fast-forward apenas se a branch correta estiver limpa. Se o script interromper por alterações locais ou branch divergente, não descartar nem sobrescrever nada; compartilhar a saída para análise.
+
+```powershell
+Set-Location D:\\ProjetoRPG-Teste-Lobby
+$expected = 'arena/b2f4e6da-projetorpg'
+$current = (git branch --show-current).Trim()
+if ($LASTEXITCODE -ne 0 -or $current -ne $expected) { throw "Branch inesperada: '$current'. Nenhuma atualização realizada." }
+$status = git status --porcelain
+if ($LASTEXITCODE -ne 0) { throw 'Não foi possível consultar git status.' }
+if ($status) { $status; throw 'Há alterações locais. Pare aqui; não fazer merge nem descarte.' }
+git fetch origin
+if ($LASTEXITCODE -ne 0) { throw 'git fetch falhou.' }
+git merge --ff-only origin/arena/b2f4e6da-projetorpg
+if ($LASTEXITCODE -ne 0) { throw 'Fast-forward não foi possível. Preserve o estado e reporte.' }
+git log -1 --oneline
+git status --short
+```
+
+Depois do fast-forward, executar `dotnet build .\\client\\ProjetoRpg.Client.csproj`. Só após build sem erros abrir a cena `res://Scenes/ImportedLobby/TemplateCharacterSelectorStage.tscn` no Godot 4.7.2 Mono e enviar captura/erros do console. A integração ao lobby principal fica bloqueada até essa validação isolada.
