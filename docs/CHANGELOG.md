@@ -1,3 +1,12 @@
+## 2026-10-29 — Refinamento visual do lobby de personagens
+
+- Removidos os oito pilares e suas esferas luminosas do cenário de prévia, que cruzavam a silhueta e encobriam o personagem na captura enviada pelo usuário.
+- Mantida somente a base cilíndrica compacta sob os pés.
+- Aproximada a câmera para destacar a figura, com enquadramento frontal e ligeiramente elevado; ampliada a instância visual do modelo sem alterar os GLBs importados.
+- Corrigido o cabeçalho: o subtítulo agora tem largura mínima, alinhamento à direita e não quebra cada caractere em uma coluna estreita.
+- Definidas larguras mínimas explícitas para os botões do rodapé, preservando status, ações e o botão de entrada no mundo desabilitado.
+- A alteração está publicada na branch de teste. **Validação pendente no Windows:** compilar, abrir o editor/rodar o lobby e confirmar visualmente câmera, escala, cabeçalho, rodapé e fluxos de conta. Não afirmar que o resultado visual foi validado antes desse teste.
+
 # Changelog
 
 ## 2026-10-29 — Avaliação estática de candidatos a mapa 3D
