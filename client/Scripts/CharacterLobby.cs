@@ -128,16 +128,19 @@ public partial class CharacterLobby : Control
             OffsetBottom = -20
         };
         AddChild(margin);
-        var page = new VBoxContainer { Separation = 14 };
+        var page = new VBoxContainer();
+        page.AddThemeConstantOverride("separation", 14);
         margin.AddChild(page);
 
-        var header = new HBoxContainer { CustomMinimumSize = new Vector2(0, 68), Separation = 12 };
+        var header = new HBoxContainer { CustomMinimumSize = new Vector2(0, 68) };
+        header.AddThemeConstantOverride("separation", 12);
         page.AddChild(header);
         var title = AddLabel(header, "PROJETORPG  /  SALÃO DE PERSONAGENS", 22);
         title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         AddLabel(header, "Prévia visual genérica · sem dados de gameplay", 13);
 
-        var body = new HBoxContainer { Separation = 18, SizeFlagsVertical = SizeFlags.ExpandFill };
+        var body = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        body.AddThemeConstantOverride("separation", 18);
         page.AddChild(body);
 
         var stagePanel = CreatePanel();
@@ -166,7 +169,8 @@ public partial class CharacterLobby : Control
         sidePanel.CustomMinimumSize = new Vector2(330, 0);
         sidePanel.SizeFlagsVertical = SizeFlags.ExpandFill;
         body.AddChild(sidePanel);
-        var side = new VBoxContainer { Separation = 10 };
+        var side = new VBoxContainer();
+        side.AddThemeConstantOverride("separation", 10);
         sidePanel.AddChild(side);
         AddLabel(side, "CONTA", 12).Modulate = new Color(0.52f, 0.77f, 0.83f);
         AddLabel(side, "Seus personagens", 21);
@@ -178,7 +182,8 @@ public partial class CharacterLobby : Control
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
         };
         side.AddChild(scroll);
-        _characterRows = new VBoxContainer { Separation = 6, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _characterRows = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _characterRows.AddThemeConstantOverride("separation", 6);
         scroll.AddChild(_characterRows);
         _emptyState = AddLabel(side, "Carregando personagens da conta…", 14);
         _emptyState.CustomMinimumSize = new Vector2(0, 58);
@@ -202,7 +207,8 @@ public partial class CharacterLobby : Control
             if (!_busy) RefreshRequested?.Invoke();
         });
 
-        var footer = new HBoxContainer { CustomMinimumSize = new Vector2(0, 72), Separation = 12 };
+        var footer = new HBoxContainer { CustomMinimumSize = new Vector2(0, 72) };
+        footer.AddThemeConstantOverride("separation", 12);
         page.AddChild(footer);
         _status = AddLabel(footer, string.Empty, 13);
         _status.SizeFlagsHorizontal = SizeFlags.ExpandFill;
