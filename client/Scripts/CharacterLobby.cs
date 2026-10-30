@@ -340,7 +340,7 @@ public partial class CharacterLobby : Control
             Fov = 34
         };
         world.AddChild(camera);
-        camera.LookAt(new Vector3(0, 0.9f, 0), Vector3.Up);
+        camera.LookAtFromPosition(camera.Position, new Vector3(0, 0.9f, 0), Vector3.Up);
         return viewportContainer;
     }
 
