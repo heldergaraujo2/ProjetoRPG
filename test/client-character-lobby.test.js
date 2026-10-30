@@ -37,6 +37,9 @@ test('the lobby DTO contains only fields actually returned by the character cont
   assert.match(endpoints, /MapGet\("\/api\/v1\/characters"/);
   assert.match(endpoints, /MapPost\("\/api\/v1\/characters"/);
   assert.match(client, /JsonSerializer\.Deserialize<List<CharacterSummary>>/);
+  assert.match(client, /seenCharacterIds\.Add\(id\)/);
+  assert.match(client, /IsValidCharacterName/);
+  assert.match(client, /IsValidClassId/);
 });
 
 test('character creation uses the real endpoint, confirms 201, and refreshes only after server confirmation', () => {
@@ -52,19 +55,22 @@ test('character creation uses the real endpoint, confirms 201, and refreshes onl
   assert.ok(create.indexOf('_preferredCharacterId = createdCharacter.CharacterId') < create.indexOf('await RefreshCharactersAsync()'));
 });
 
-test('the preview uses an isolated original 3D stage and removes the prior figure on selection changes', () => {
+test('the account lobby creates one isolated idle 3D preview card for every server-returned character', () => {
+  assert.match(lobby, /foreach \(var character in characters\)\s*AddCharacterCard\(character\)/);
+  assert.match(lobby, /new GridContainer/);
   assert.match(lobby, /new SubViewportContainer/);
   assert.match(lobby, /RenderTargetUpdateMode = SubViewport\.UpdateMode\.WhenVisible/);
-  assert.match(lobby, /BuildPreviewWorld\(\)/);
-  assert.match(lobby, /GenericCharacterPreview/);
-  assert.match(lobby, /_previewRoot\.RemoveChild\(_figure\)/);
-  assert.match(lobby, /_figure\.Free\(\)/);
-  const replace = lobby.slice(lobby.indexOf('private void ReplacePreviewFigure'), lobby.indexOf('private void ClearPreview'));
-  assert.ok(replace.indexOf('ClearPreview()') < replace.indexOf('new Node3D'));
-  assert.ok(replace.indexOf('new Node3D') < replace.indexOf('_previewRoot.AddChild(figure)'));
+  assert.match(lobby, /CreateCharacterViewport\(CharacterSummary character\)/);
+  assert.match(lobby, /actor\.PlayerControlled = false/);
+  assert.match(lobby, /actor\.ModelScene = model/);
+  assert.match(lobby, /ResolvePreviewModel\(character\.ClassId\)/);
+  assert.match(lobby, /RefreshCardSelection\(\)/);
+  assert.match(lobby, /BorderColor = selected \?/);
+  assert.match(lobby, /PRÉVIA GENÉRICA|prévia genérica/);
+  assert.match(lobby, /A figura é uma prévia genérica, não aparência persistida/);
   assert.match(environment, /background_color/);
-  assert.doesNotMatch(lobby, /CharacterActor|CharacterDemo|Barbarian\.glb|Mage\.glb/);
-  assert.doesNotMatch(lobby, /AnimationPlayer|Play\("Idle"\)/);
+  assert.match(readFileSync(new URL('../client/Scripts/CharacterActor.cs', import.meta.url), 'utf8'), /PlayAnimation\("Idle"\)/);
+  assert.doesNotMatch(lobby, /CharacterDemo\.tscn/);
 });
 
 test('loading, empty, failure, retry, logout, and account switching states are represented', () => {
@@ -95,10 +101,10 @@ test('logout clears local account state even when remote revocation throws', () 
   assert.ok(logout.indexOf('ClearLocalSession()') < logout.indexOf('SetStatus(serverRevoked'));
 });
 
-test('world entry stays unavailable because no authoritative server route exists', () => {
-  assert.match(lobby, /Entrar no mundo — indisponível/);
+test('world entry remains disabled until the full authoritative session, map, spawn, and movement contract exists', () => {
+  assert.match(lobby, /Entrar no mundo — em implementação/);
   assert.match(lobby, /_enterWorldButton\.Disabled = true/);
-  assert.match(lobby, /O servidor ainda não oferece uma operação autoritativa de entrada no mundo/);
+  assert.match(lobby, /A entrada permanece bloqueada até haver validação server-authoritative/);
   assert.doesNotMatch(`${endpoints}\n${serverProgram}`, /Map(?:Post|Get|Put|Patch)\("\/api\/v1\/world/);
   assert.doesNotMatch(endpoints, /Map(?:Post|Get|Put|Patch)\("\/api\/v1\/characters\/[^\"]+\/enter/);
 });

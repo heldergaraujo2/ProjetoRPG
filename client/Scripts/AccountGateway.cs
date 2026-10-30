@@ -264,9 +264,13 @@ public partial class AccountGateway : Control
         {
             var characters = JsonSerializer.Deserialize<List<CharacterSummary>>(response.Body, _jsonOptions)
                 ?? throw new JsonException("Lista nula.");
+            var seenCharacterIds = new HashSet<Guid>();
             if (characters.Any(character =>
-                    !Guid.TryParse(character.CharacterId, out _) || string.IsNullOrWhiteSpace(character.Name)))
-                throw new JsonException("Um registro não contém os campos mínimos do contrato.");
+                    !Guid.TryParse(character.CharacterId, out var id) ||
+                    !seenCharacterIds.Add(id) ||
+                    !IsValidCharacterName(character.Name) ||
+                    !IsValidClassId(character.ClassId)))
+                throw new JsonException("A lista contém identificadores duplicados ou campos fora do contrato.");
 
             _lobby.SetCharacters(characters, _preferredCharacterId);
             _preferredCharacterId = null;
@@ -380,7 +384,8 @@ public partial class AccountGateway : Control
         try
         {
             var parsed = JsonSerializer.Deserialize<CharacterSummary>(body, _jsonOptions);
-            if (parsed is null || !Guid.TryParse(parsed.CharacterId, out _) || string.IsNullOrWhiteSpace(parsed.Name))
+            if (parsed is null || !Guid.TryParse(parsed.CharacterId, out _) ||
+                !IsValidCharacterName(parsed.Name) || !IsValidClassId(parsed.ClassId))
                 return false;
             character = parsed;
             return true;
@@ -390,6 +395,38 @@ public partial class AccountGateway : Control
             return false;
         }
     }
+
+    private static bool IsValidCharacterName(string? name)
+    {
+        if (name is not { Length: >= 3 and <= 20 } || !IsAsciiLetter(name[0])) return false;
+        return name.Skip(1).All(character => IsAsciiLetter(character) ||
+            character is >= '0' and <= '9' or '_');
+    }
+
+    private static bool IsValidClassId(string? classId)
+    {
+        if (classId is null) return true;
+        if (classId.Length is < 1 or > 64) return false;
+        var previousWasSeparator = true;
+        foreach (var character in classId)
+        {
+            if (character is >= 'a' and <= 'z' or >= '0' and <= '9')
+            {
+                previousWasSeparator = false;
+                continue;
+            }
+            if ((character is '.' or '_') && !previousWasSeparator)
+            {
+                previousWasSeparator = true;
+                continue;
+            }
+            return false;
+        }
+        return !previousWasSeparator;
+    }
+
+    private static bool IsAsciiLetter(char character) =>
+        character is >= 'A' and <= 'Z' or >= 'a' and <= 'z';
 
     private static string DescribeApiError(ApiResponse response)
     {

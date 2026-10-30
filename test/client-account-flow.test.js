@@ -44,9 +44,9 @@ test('credentials and bearer token are transient; classless character creation i
   assert.match(client, /_password\.Secret = true/);
   assert.match(client, /classId = \(string\?\)null/);
   assert.doesNotMatch(client, /FileAccess|ConfigFile|PlayerPrefs|GD\.Print.*(?:password|accessToken|bearer)/i);
-  assert.match(lobby, /nenhuma sessão de mundo foi criada/i);
+  assert.match(lobby, /A seleção não inicia sessão de mundo/i);
   assert.match(client, /não inicia gameplay/i);
-  assert.match(lobby, /Entrar no mundo — indisponível/);
+  assert.match(lobby, /Entrar no mundo — em implementação/);
   assert.match(lobby, /\.Disabled = true/);
 });
 
