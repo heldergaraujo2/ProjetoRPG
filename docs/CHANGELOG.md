@@ -1,3 +1,13 @@
+## 2026-10-29 — Primeira fatia gameplay server-authoritative para Coast
+
+- Acrescentado contrato WS v2 e migration aditiva `0002_world_sessions`; sessão idempotente, ownership, estado inicial, tick de 20 Hz, limites de intenção/velocidade, validação da malha Coast e persistência por movimento.
+- Criados `WorldMapCatalog`, `WorldSessionService`, endpoints `POST/DELETE /api/v1/world/sessions` e fluxo autenticado `Hello → WorldJoin → MoveIntent → WorldState` em `/ws`. Sem coordenadas finais confiáveis do cliente.
+- Lobby habilita entrada apenas para seleção validada; `AccountGateway` pede estado inicial ao servidor; cena própria Godot carrega Coast/ator com WASD/setas, câmera, Idle/Walking, reconnect e volta ao lobby. Bootstrap mantido.
+- Coast MIT permanece seletiva; 1.849 triângulos da NavigationMesh foram copiados para o catálogo autoritativo. Nenhum gameplay upstream trazido.
+- `npm test`: 29/29 passou; parser sintático tree-sitter e análise geométrica do spawn passaram. Estes resultados não são build C#/Godot.
+- `npm run test:phase1` bloqueado código 2 por falta do .NET SDK; `npm run test:target:client` bloqueado código 2 por falta de Godot Mono; sem Docker/PostgreSQL no Agent. Nenhum build/migration/runtime/inspeção visual foi executado.
+- Estado permanece implementação não validada; validação final somente na cópia Windows `D:\\ProjetoRPG-Teste-Lobby`, nunca `D:\\AProjeto RPG Fixo`. Veja `docs/reports/FLUXO_GAMEPLAY_SERVER_AUTHORITATIVE_2026-10-29.md` e `CHECKPOINT.md`.
+
 ## 2026-10-29 — Auditoria direta do template Character Selector/Lobby
 
 - Inspecionados diretamente `CharacterSelector.tscn/.gd`, `Lobby.tscn/.gd`, cenas/scripts de personagem, `project.godot`, README e LICENSE do template.

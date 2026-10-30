@@ -1,23 +1,23 @@
-# Windows — clonar, instalar e validar
+# Windows — build, testar e validar gameplay Coast
 
-Este guia configura o **scaffold e a implementação parcial de Fase 1** para download e validação. A Fase 0 foi confirmada pelo usuário no Windows (builds e smokes registrados em `CHECKPOINT.md`). As alterações de Fase 1 descritas neste branch ainda precisam de build e integração PostgreSQL reais; a cena Bootstrap/clock não é gameplay e a Fase 1 não está concluída.
+Este guia é para a branch `arena/b2f4e6da-projetorpg` e a integração de sessão Coast. No estado desta revisão, o código foi acrescentado mas ainda não foi compilado/importado ou comprovado em runtime. Faça o teste final somente na cópia descartável `D:\ProjetoRPG-Teste-Lobby`; **não acessar nem modificar `D:\AProjeto RPG Fixo`**.
 
-## 1. Clonar a branch publicada
+## 1. Clonar e confirmar branch
 
-Abra PowerShell em uma pasta de desenvolvimento e execute:
+Use uma pasta temporária de teste:
 
 ```powershell
-git clone --branch arena/b2f4e6da-projetorpg --single-branch https://github.com/heldergaraujo2/ProjetoRPG.git ProjetoRPG
-Set-Location .\ProjetoRPG
-git status --short
+git clone --branch arena/b2f4e6da-projetorpg --single-branch https://github.com/heldergaraujo2/ProjetoRPG.git D:\ProjetoRPG-Teste-Lobby
+Set-Location D:\ProjetoRPG-Teste-Lobby
+git status --short --branch
 git log -1 --oneline
 ```
 
-O clone é Git comum do repositório público; use a branch da PR, não `main`, até as alterações serem integradas. O clone contém o commit mais recente publicado no momento em que você executá-lo.
+O clone deverá estar limpo e na branch citada. Não executar `reset`, `clean`, checkout destrutivo ou sincronização automática na cópia.
 
-## 2. Instalar ferramentas oficiais
+## 2. Toolchain
 
-Em Windows x64 com WinGet, instale as versões pinadas no projeto:
+Com WinGet e os manifests oficiais compatíveis:
 
 ```powershell
 winget install --id OpenJS.NodeJS.22 --exact --version 22.22.3
@@ -25,129 +25,66 @@ winget install --id Microsoft.DotNet.SDK.10 --exact --version 10.0.402
 winget install --id GodotEngine.GodotEngine.Mono --exact --version 4.7.2
 ```
 
-Abra um novo PowerShell para atualizar o `PATH`, vá à raiz do clone e confirme:
+Abra um novo PowerShell e confirme `node --version`, `npm --version`, `dotnet --info`, `godot --version` (`4.7.2` com `.mono`). Godot Mono inclui runtime C# para executar; o cliente/shared têm TFM `net8.0`, e o servidor TFM `net10.0`. Faça restore pelo SDK .NET; só instale SDK 8 se restore apontar falta do targeting pack `Microsoft.NETCore.App.Ref`.
 
-```powershell
-node --version
-npm --version
-dotnet --info
-dotnet --list-sdks
-dotnet --list-runtimes
-godot --version
-```
+## 3. Restore e testes automatizados
 
-Esperado: Node `v22.22.3` (o `package.json` aceita `>=22.22.3 <23`), SDK .NET `10.0.402` (o `global.json` permite patches da mesma banda `10.0.4xx`) e Godot `4.7.2` com o marcador `.mono`. Se WinGet não estiver disponível, use os downloads oficiais e valide integridade/TLS; os manifestos usados para confirmar os IDs, versões, URLs e hashes WinGet são [Node.js 22.22.3](https://github.com/microsoft/winget-pkgs/blob/master/manifests/o/OpenJS/NodeJS/22/22.22.3/OpenJS.NodeJS.22.installer.yaml), [.NET SDK 10.0.402](https://github.com/microsoft/winget-pkgs/blob/master/manifests/m/Microsoft/DotNet/SDK/10/10.0.402/Microsoft.DotNet.SDK.10.installer.yaml) e [Godot Mono 4.7.2](https://github.com/microsoft/winget-pkgs/blob/master/manifests/g/GodotEngine/GodotEngine/Mono/4.7.2/GodotEngine.GodotEngine.Mono.installer.yaml).
-
-### SDK, runtime e targeting pack — não são a mesma coisa
-
-- Godot 4.7 Mono traz o runtime .NET usado para executar jogos Godot C#. **Não instale um runtime .NET 8 separado** para este projeto.
-- O .NET SDK 10 contém compilador/MSBuild e runtime .NET 10 para o servidor `net10.0`.
-- O cliente e `shared` têm TFM `net8.0`, conforme os targets oficiais `GodotSharp`/`GodotTools` do Godot 4.7.2. O build precisa do reference/targeting pack .NET 8. Primeiro deixe o restore resolver o pack pelo NuGet. Só se o restore falhar especificamente por falta do pack `Microsoft.NETCore.App.Ref` instale o SDK 8 oficial, por exemplo `winget install --id Microsoft.DotNet.SDK.8 --exact --version 8.0.427`; SDK 8 traz o targeting pack. O `global.json` continuará selecionando o SDK 10 para os projetos.
-- O requisito oficial Godot 4.7 é .NET SDK 8 ou posterior; SDK 10 atende a esse mínimo documentado. Ainda falta confirmar o build completo deste repositório em máquina Windows.
-
-## 3. Restaurar dependências do clone
-
-Na raiz do repositório:
+Da raiz:
 
 ```powershell
 npm ci
+npm run check
 dotnet restore shared\ProjetoRpg.Shared.csproj
 dotnet restore server\ProjetoRpg.Server.csproj
 dotnet restore client\ProjetoRpg.Client.csproj
-```
-
-Dependências conhecidas:
-
-- `ws` do protótipo Node, travado em `package-lock.json` e instalado por `npm ci`.
-- `Godot.NET.Sdk/4.7.2`, `GodotSharp` e o targeting pack .NET 8 via restore .NET/NuGet.
-- ASP.NET Core vem do shared framework do .NET SDK; não há provider de banco configurado.
-- `content/manifest.json`, catálogos iniciais e schema estão versionados. As imagens em `docs/referencias/` também estão incluídas; são referências visuais, não assets transparentes/finais de produção.
-
-Não há submódulos Git, Git LFS ou arquivos obrigatórios exclusivos do Arena. `node_modules`, `.godot`, `bin` e `obj` são artefatos locais ignorados/recriáveis.
-
-## 4. Builds e testes do scaffold alvo
-
-Execute na raiz:
-
-```powershell
-npm run check
 dotnet build shared\ProjetoRpg.Shared.csproj
-dotnet run --project tests\Shared.Smoke\Shared.Smoke.csproj
-npm run test:target:server
-npm run test:target:client
-npm run test:target
-```
-
-`npm run test:target` executa, em ordem, smoke de protocolo, integração do servidor e smoke Godot. O smoke do servidor sobe uma porta local temporária, testa `/health/live`, `/health/tick`, `/health/content`, handshake e ping-pong WebSocket, recusa versão/manifest inválidos e mede por 1 segundo a taxa média do clock (aceita 15–25 ticks/s como margem). Essa medição do clock **não** comprova simulação de mundo ou deadline por tick. O smoke do cliente usa o editor Godot headless com `--build-solutions`, inicia a cena Bootstrap e requer `CLIENT_BOOT_OK`.
-
-O teste C# compartilhado deve imprimir `SHARED_PROTOCOL_SMOKE_OK`; os smokes integrados terminam com `SERVER_INTEGRATION_OK` e `GODOT_CLIENT_SMOKE_OK` quando todos os critérios correspondentes passarem. Guarde a saída completa se houver falha e atualize `CHECKPOINT.md`; não marque a Fase 0 concluída só porque um projeto compila.
-
-## 5. Iniciar manualmente (opcional)
-
-Servidor dedicado de desenvolvimento:
-
-```powershell
-$env:ASPNETCORE_URLS = 'http://127.0.0.1:5050'
-dotnet run --project server\ProjetoRpg.Server.csproj
-```
-
-Em outro PowerShell, `Invoke-RestMethod http://127.0.0.1:5050/health/live` verifica o processo e `/health/tick` mostra os pulsos contados. A persistência é explicitamente `false` e o endpoint não autentica jogadores.
-
-Cliente de diagnóstico:
-
-```powershell
-godot --path client
-```
-
-A cena Bootstrap é somente confirmação de boot; ainda não há login, movimento, combate, conexão ao servidor ou gameplay.
-
-> `npm start` inicia o protótipo legado Node/Canvas em `http://localhost:3000`; não é o cliente Godot nem o servidor ASP.NET Core. `npm run check` valida esse protótipo e a sintaxe dos scripts, não os builds Godot/.NET.
-
-## 6. PostgreSQL e validação de Fase 1
-
-O servidor usa PostgreSQL via Npgsql `10.0.0`; SQLite ainda não tem provider/schema e permanece pendente. A Fase 1 cria migration versionada, contas/sessões, personagens persistentes, audit log e endpoints de saúde. A implementação ainda não foi compilada/testada neste sandbox; consulte `CHECKPOINT.md` para o resultado exato desta missão.
-
-Para build/restore do servidor:
-
-```powershell
 dotnet build server\ProjetoRpg.Server.csproj
-```
-
-`RestorePackagesWithLockFile` está habilitado para gerar `server\packages.lock.json` no restore. Como o SDK .NET não está instalado neste executor, o lock NuGet não pôde ser gerado/validado aqui; revise e versione esse arquivo após o primeiro restore Windows bem-sucedido.
-
-O teste de integração completo cria PostgreSQL descartável e requer Docker Desktop/Engine ativo:
-
-```powershell
-npm ci
-npm run check
 npm run test:phase1
+npm run test:target:client
 ```
 
-`npm run test:target:server` é um alias compatível para o mesmo teste. `npm run test:target` inclui o servidor/DB e, portanto, também requer Docker além do SDK e Godot Mono. O teste registra a versão e image ID resolvida do `postgres:18-alpine`; `PROJETORPG_TEST_POSTGRES_IMAGE` pode fixar tag/digest para uma execução reproduzível. Nenhum volume de dados é criado, e não se deve apontar o runner para dados de jogadores.
+`npm run test:phase1` cria banco PostgreSQL descartável em Docker e inclui migrações/auth/ownership, sessão idempotente, spawn, WS auth, input inválido/posição arbitrária, velocidade, caminhada até borda navigável, desconexão/reconexão/reinício e encerramento. Requer Docker Desktop/Engine, .NET SDK 10 e rede NuGet. Nenhum banco real/de jogador deve ser apontado a esse runner.
 
-Para executar manualmente, defina `ConnectionStrings__GameDatabase` no ambiente PowerShell, confira estado e aplique a migration antes de iniciar:
+`npm run check` e `npm test` são Node/estáticos/geometria; não compilam C# nem importam Godot. `npm run test:target:client` usa Godot 4.7.2 Mono headless para import/build e Bootstrap. Build/import não provam gameplay visual.
+
+## 4. Banco local descartável e servidor
+
+Use PostgreSQL vazio/descartável ou o container isolado de `test:phase1`. Defina segredo somente na sessão do PowerShell; não salve em arquivo versionado:
 
 ```powershell
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
-$env:ConnectionStrings__GameDatabase = 'Host=127.0.0.1;Port=5432;Database=projetorpg;Username=<usuario-local>;Password=<senha-local>;Ssl Mode=Disable'
+$env:ASPNETCORE_URLS = 'http://127.0.0.1:5050'
+$env:ConnectionStrings__GameDatabase = 'Host=127.0.0.1;Port=5432;Database=projetorpg_test;Username=<usuario-local>;Password=<senha-local>;Ssl Mode=Disable'
 dotnet run --project server\ProjetoRpg.Server.csproj -- --db-status
 dotnet run --project server\ProjetoRpg.Server.csproj -- --db-migrate
 dotnet run --project server\ProjetoRpg.Server.csproj
 ```
 
-Não salve a connection string ou senha em arquivos commitados. Production exige TLS com validação de certificado e uma conexão de migração separada (`ConnectionStrings__MigrationDatabase`) com privilégio DDL; o servidor usa usuário runtime limitado. `--db-rollback --confirm-data-loss` remove tabelas/dados da migration inicial: somente em banco descartável ou após backup restaurável confirmado.
+Confirme `pending=[]`, `/health/ready` HTTP 200, `/health/world` com `world.coast`/`coast.initial`, `/health/tick` com `configuredRateHz=20`. A migration `0002_world_sessions` é aditiva; rollback apaga world sessions e requer `--confirm-data-loss`, somente em banco descartável/backup confirmado. O boot não migra banco automaticamente.
 
-`/health/live` mede o processo; `/health/database` executa consulta real; `/health/ready` exige banco e schema atualizado. O catálogo atual não oferece classes: personagens novos permanecem sem classe até haver conteúdo real. Não existe jogo jogável, nem SQLite, nem migração validada por execução ainda.
+## 5. Godot e fluxo de aceitação manual
 
-### Teste de 100 conexões WebSocket ociosas (manual, separado)
-
-Com servidor iniciado, migration aplicada e PostgreSQL disponível:
+Em outra janela, aponte o cliente somente ao servidor loopback:
 
 ```powershell
-$env:PROJETORPG_LOAD_URL = 'http://127.0.0.1:5050'
-$env:PROJETORPG_LOAD_CLIENTS = '100'
-$env:PROJETORPG_LOAD_DURATION_SECONDS = '60'
-npm run load:parked
+$env:PROJETORPG_SERVER_URL = 'http://127.0.0.1:5050'
+godot --editor --path .\client
 ```
 
-Isso mantém 100 conexões de protocolo sem autenticação/gameplay e não é resultado de teste executado nem prova de capacidade de produção.
+Importe/compile, abra `client/project.godot` e mantenha `Scenes/Bootstrap.tscn` como main scene. Execute o projeto e valide, visualmente e com logs:
+
+1. Login de conta real; lista de personagens é exatamente a resposta API, em cartões 3D independentes, com nomes corretos e Idle; selecionar personagem e conferir destaque.
+2. Botão “Entrar no mundo” desabilitado sem seleção, habilitado com seleção; clicar solicita POST. Confirmar que personagem da outra conta/inexistente não entra e que sessão repetida retoma mesmo ID/posição.
+3. Coast carregada de verdade via `CoastWorld.tscn`; confirmar terreno/texturas/água/luz, câmera, personagem correspondente, spawn autorizado e chão/navmesh.
+4. WASD/setas caminham; Idle/Walking e orientação coerentes; medir que não excede speed do servidor; confirmar que navmesh/colisor param o ator na borda e em obstáculo. Nenhum movimento local especulativo pode permanecer após o servidor parar de enviar state.
+5. Encerrar conexão abruptamente e reconectar dentro de dez minutos; posição autoritativa persiste. Testar reinício do servidor/sessão se disponível.
+6. “Voltar ao salão” envia DELETE, encerra sessão, devolve ao lobby e permite selecionar/entrar novamente. Simular rede indisponível/auth expirada e confirmar mensagem/retry/retorno seguro.
+7. Registrar capturas da tela, logs sem tokens/credenciais, versões exatas de toolchain, comandos e status de cada teste.
+
+Se qualquer passo falhar, não declarar sucesso; registrar erro reproduzível e corrigir. A malha server-side é uma aproximação geométrica e não roda o `PhysicsServer3D`: confirmar correspondência física com a Coast importada é obrigatório.
+
+## 6. Protocolo e limites
+
+`POST /api/v1/world/sessions` recebe apenas `characterId` sob Bearer; server seleciona Coast/spawn. `DELETE /api/v1/world/sessions/{id}` encerra. `/ws` usa versão 2: `Hello`, `WorldJoin`, `WorldJoined`, `MoveIntent` (direção + sequência), `WorldState`/`InputRejected`, `Bye`. Nenhuma posição final, velocidade ou delta arbitrário vem do cliente.
+
+É a primeira sessão individual autoritativa, **não multiplayer**: não existem broadcasts de outros jogadores ou colisões dinâmicas entre avatares. Combate, inventário, missões/atributos não fazem parte desse escopo.

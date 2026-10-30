@@ -68,9 +68,7 @@ O resultado final precisa ser um jogo realmente executável, com cliente e servi
 
 ## 3. Arquitetura e tecnologias
 
-O documento `02_ARQUITETURA.md` apresenta uma proposta inicial: cliente Godot 4 com C#, servidor dedicado em .NET/C#, PostgreSQL (com SQLite possível no desenvolvimento), biblioteca compartilhada, comunicação de rede, conteúdo em JSON/YAML validado e testes automatizados.
-
-Essa proposta **não deve ser tratada como decisão final antes da confirmação prevista na Fase 0**. O Agent deve avaliar rapidamente a adequação técnica, as versões suportadas, as ferramentas disponíveis no ambiente, os requisitos de exportação e o custo de manutenção. Registrar a decisão em `docs/adr/ADR-001-stack.md` (ou no local oficial já adotado pelo repositório) e atualizar a arquitetura. Não desperdice uma sessão inteira comparando alternativas: decida com evidências suficientes e avance.
+A stack aprovada está em `docs/adr/ADR-001-stack.md`: Godot 4.7.2 Mono/`net8.0` cliente, ASP.NET Core/`net10.0` servidor, PostgreSQL/Npgsql, Shared sem dependência Godot, WebSocket JSON versionado e conteúdo em JSON. A seleção foi decidida; build/compatibilidade real ainda requer validação no ambiente-alvo.
 
 ### Separação lógica recomendada
 
@@ -98,29 +96,26 @@ A estrutura exata pode ser adaptada à implementação existente, mas responsabi
 
 ## 4. Controles obrigatórios do jogador
 
-O controle de gameplay deve ser baseado em cliques do mouse. As teclas de atalho indicadas abaixo podem abrir interfaces, mas não devem movimentar o personagem nem executar ações de combate.
+Nesta fatia Coast, o movimento é por WASD/setas e somente o servidor aplica posição. Combate, clique para movimento e atalhos I/P/M não fazem parte do fluxo jogável atual e não devem ser simulados; futura mudança de controles requer escopo aprovado.
 
 | Entrada | Comportamento obrigatório |
 |---|---|
-| Clique esquerdo no chão | O personagem se desloca até o ponto clicado, respeitando navegação, colisões e obstáculos. |
-| Clique esquerdo em um alvo interativo | Seleciona ou interage com o alvo conforme o contexto, sem criar ambiguidades com a movimentação. |
-| Clique direito em inimigo válido | Ordena ataque ao alvo; o servidor valida alcance, linha de visão quando aplicável, tempo de ataque, estado do personagem e demais regras. |
-| Clique direito sem alvo válido | Não dispara ataques arbitrários; comportamento consistente e documentado. |
-| `I` | Abre/fecha o inventário. |
-| `P` | Abre/fecha o painel do personagem. |
-| `M` | Abre/fecha a lista de mapas. |
-| `W`, `A`, `S`, `D`, Espaço | **Não executam funções de gameplay.** Não movimentam, atacam, esquivam, pulam nem ativam habilidades. |
+| Clique esquerdo no chão | Não implementado nesta fatia; não altera posição local. |
+| Clique esquerdo em um alvo interativo | Não implementado nesta fatia. |
+| Clique direito em inimigo válido | Combate não implementado nesta fatia. |
+| Clique direito sem alvo válido | Sem ação de gameplay nesta fatia. |
+| `I` | Inventário fora do escopo desta fatia. |
+| `P` | Painel do personagem fora do escopo desta fatia. |
+| `M` | Lista/teleporte fora do escopo desta fatia. |
+| `W`, `A`, `S`, `D`, setas | Movem o personagem na primeira área Coast por intenção validada pelo servidor; o cliente não envia coordenadas finais. |
+| Espaço | Não executa função de gameplay nesta etapa. |
 
-Os atalhos I, P e M são exceções de interface expressamente permitidas. Outras teclas não devem ganhar funções de gameplay sem alteração explícita dos requisitos. O Agent deve pesquisar e remover mapeamentos antigos de teclado, inclusive ações herdadas da engine, scripts, configurações de input e atalhos de depuração acessíveis ao jogador.
+WASD/setas são o controle único desta fatia. Espaço, mouse para movimento/combate, inventário, painel e mapa não têm ação implementada; não inventar subsistemas secundários.
 
 ### Aceite dos controles
 
-- Clique esquerdo no chão produz movimento real até o destino válido.
-- Obstáculos e limites do cenário são respeitados.
-- Clique direito em inimigo executa o fluxo de ataque real e respeita as regras do servidor.
-- W/A/S/D/Espaço não provocam ações de gameplay.
-- I, P e M abrem as interfaces corretas.
-- Seleção de alvo, movimento, combate e interfaces não entram em conflito em situações comuns.
+- WASD/setas produzem intenções limitadas; só o estado recebido do servidor reposiciona o ator e obstáculos/bordas da Coast param o movimento.
+- Espaço não provoca ação de gameplay nesta etapa.
 
 ---
 
@@ -383,7 +378,7 @@ O `CHECKPOINT.md` existente define a sequência de 15 fases abaixo. Preserve seu
 
 **Aceite:** servidor inicia de forma reproduzível; banco e migrações funcionam; testes básicos passam; entradas inválidas são tratadas.
 
-**Incremento atual (parcial, não aceite de fase):** PostgreSQL/Npgsql, migration inicial versionada, config validada por ambiente, readiness/liveness, registro/login com PasswordHasher do ASP.NET Core, sessões bearer com expiração/revogação, personagens vinculados à conta, audit log e runner de integração descartável foram adicionados. A lista real de classes está vazia; personagens podem permanecer sem classe, e nenhum gameplay é simulado. Ver `server/README.md` e `CHECKPOINT.md`. `npm run test:phase1` é o teste automatizado do banco real (Docker/PostgreSQL) e ainda precisa ser executado em ambiente com SDK .NET 10 e Docker.
+**Incremento atual (parcial, ainda não aceito por falta de build/runtime):** PostgreSQL/Npgsql, migration versionada, registro/login, bearer, ownership de personagens, audit log, lista real sem classe inventada e sessão Coast com movimento autoritativo foram acrescentados. `npm run test:phase1` inclui DB descartável, sessão, ownership, spawn, velocidade, colisão/navmesh, desconexão/reconexão e persistência; requer SDK .NET 10 e Docker e permanece bloqueado até executá-lo. Veja `server/README.md` e `CHECKPOINT.md`.
 
 ### Fase 2 — Cliente base e login
 
@@ -399,16 +394,14 @@ O `CHECKPOINT.md` existente define a sequência de 15 fases abaixo. Preserve seu
 
 ### Fase 3 — Mundo e movimento
 
-**Objetivo:** permitir entrar num mapa e controlar o personagem.
+**Objetivo:** primeira fatia jogável com entrada real em Coast e movimento server-authoritative.
 
-- Criar a primeira área 3D navegável.
-- Implementar entidades, spawn, colisões e navegação.
-- Implementar movimento por clique esquerdo.
-- Remover movimento por W/A/S/D/Espaço.
-- Sincronizar movimento entre clientes conectados.
-- Implementar entrada, saída e transição básica de mundo.
+- Abrir Coast via uma sessão criada/retomada pelo servidor após ownership check.
+- Instanciar personagem selecionado no spawn autorizado; validar movimento por WASD/setas, ticks, velocidade e navegação no servidor.
+- Tratar colisões/bordas, orientação, câmera, Idle/Walking, desconexão/reconexão, encerramento e retorno ao lobby.
+- Manter multiplayer, sincronização entre pares e movimento por clique como trabalho futuro fora desta fatia; não chamar o jogador local de multiplayer.
 
-**Aceite:** movimento por clique funciona; obstáculos são respeitados; controles de teclado proibidos não executam gameplay; dois clientes conseguem observar o movimento um do outro por sincronização real.
+**Aceite desta fatia:** login → personagens da API → seleção → entrada autorizada → Coast → spawn → caminhar com estado/velocidade validados pelo servidor e parada em limites navegáveis. Build Godot/.NET, teste PostgreSQL e inspeção visual/física continuam obrigatórios; testes estáticos não aceitam a fase.
 
 ### Fase 4 — Combate, monstros e habilidades
 
@@ -612,9 +605,9 @@ Não confunda “planejado”, “iniciado”, “implementado”, “testado”
 
 ## 15. Primeira ação ao receber este README
 
-O Agent deve começar auditando o repositório e a documentação, confirmando a fase atual registrada em `CHECKPOINT.md` e comparando-a com o estado real dos arquivos e testes. Como o checkpoint existente aponta para a **Fase 0 — Preparação**, verifique se isso continua verdadeiro antes de agir.
+O Agent deve começar auditando o repositório e a documentação, confirmando a fase atual registrada em `CHECKPOINT.md` e comparando-a com o estado real dos arquivos e testes. Consulte a situação vigente em `CHECKPOINT.md`; instruções antigas que afirmam Fase 0 são históricas e não substituem o estado mais recente.
 
-Se a Fase 0 ainda estiver incompleta, execute o próximo passo documentado: avaliar e confirmar a arquitetura com ADR-001, estabelecer a estrutura necessária e preparar build/teste inicial de cliente e servidor. Não comece pelas telas ou por sistemas avançados antes de estabelecer essa base.
+A Fase 0 e a decisão ADR-001 são históricas/concluídas. Continue pelo próximo passo de gameplay registrado no `CHECKPOINT.md`; neste checkout a implementação Coast está no código, mas .NET/Godot e teste Windows ainda são bloqueios de validação.
 
 Depois, implemente, valide e documente o trabalho de forma incremental, seguindo o roadmap até a Fase 14. O objetivo é entregar um MMORPG real, e não apenas um plano, uma demonstração visual ou um conjunto de arquivos sem integração.
 
@@ -622,25 +615,15 @@ Depois, implemente, valide e documente o trabalho de forma incremental, seguindo
 
 ## Estado e comandos deste checkout
 
-A documentação completa do pacote oficial está preservada em [`rpg-pack/`](rpg-pack/). A fonte operacional de progresso é o [`CHECKPOINT.md`](CHECKPOINT.md) da raiz; `rpg-pack/CHECKPOINT.md` é histórico. A auditoria identificou a branch ativa `arena/b2f4e6da-projetorpg` no commit-base `40e8bad` e atualizou somente a referência `origin/main`, então em `9ac6d53`. Esse `main` continha especificação, exemplos e checkpoint inicial, mas nenhum scaffold Godot/.NET. A branch Arena não foi trocada nem mesclada. O scaffold abaixo foi criado nesta branch depois da auditoria; consulte o checkpoint para separar código existente de critérios comprovados.
+O `CHECKPOINT.md` na raiz é a fonte operacional vigente. Textos de fases anteriores e o conteúdo histórico em `rpg-pack/` descrevem roadmap/decisões antigas; não provam funcionalidade atual nem substituem os requisitos atuais de WASD/setas e entrada server-authoritative Coast.
 
-O protótipo Node/Canvas permanece preservado e é validado separadamente. A partir da raiz:
+O protótipo Node/Canvas legado segue separado. Comandos locais:
 
 ```bash
 npm ci
 npm run check
-npm run doctor
-npm start
+npm run test:phase1       # requer SDK .NET e Docker/PostgreSQL descartável
+npm run test:target       # requer Godot 4.7.2 Mono e .NET
 ```
 
-Com Godot 4.7.2 Mono e SDK .NET 10.0.402 disponíveis (o targeting pack net8.0 do client deve ser resolvido no restore; não instale runtime .NET 8 separado), os comandos de validação do alvo são:
-
-```bash
-dotnet --info
-dotnet run --project tests/Shared.Smoke/Shared.Smoke.csproj
-npm run test:target:server
-npm run test:target:client
-npm run test:target
-```
-
-`npm run doctor` só verifica ferramentas; `npm run check` só verifica o protótipo Node e sintaxe dos scripts. O teste do servidor compila e testa HTTP/WebSocket, tick 20 Hz e rejeição de manifest inválido; o teste Godot importa/compila e exige boot headless. Nenhum destes builds de destino foi executado com sucesso nesta sessão: `godot`/`dotnet` não estão instalados e o download oficial falhou com erro TLS/EOF. Veja [`docs/02_ARQUITETURA.md`](docs/02_ARQUITETURA.md), [`docs/WINDOWS_SETUP.md`](docs/WINDOWS_SETUP.md) e [`CHECKPOINT.md`](CHECKPOINT.md) para detalhes, instruções de clone/build/testes e pendências.
+`npm run check` executa Node/tests estáticos/geometria; não compila C# nem importa Godot. `/health/ready` requer migration 2. No Agent atual, `dotnet`, `godot`, `godot4`, Docker e PostgreSQL não estão disponíveis; portanto nenhuma build .NET/Godot, integração executável nem prova visual/física foi concluída nesta etapa. A validação Windows é somente em `D:\ProjetoRPG-Teste-Lobby`; não utilizar `D:\AProjeto RPG Fixo`. Veja `docs/02_ARQUITETURA.md`, `docs/CONTRATO_FUTURO_SESSAO_GAMEPLAY.md`, `server/README.md` e `CHECKPOINT.md` para rotas/protocolo/testes/limites.
