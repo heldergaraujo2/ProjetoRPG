@@ -4,7 +4,7 @@
 **Branch autorizada:** `arena/b2f4e6da-projetorpg` (`pr_open`)
 **Clone de trabalho exclusivo:** `/home/user/ProjetoRPG-integration-20261030`
 **Base/remote verificados no início:** `bd55328d3b0261fb673f8cc395c7715ff7f04413`.
-**Estado desta etapa:** código da fatia escrito no clone; falta compile/build/integration/runtime/visual Windows. Não marcar como tarefa concluída/jogável até evidência de execução.
+**Estado desta etapa:** implementação e documentação em dois commits foram enviadas para a branch autorizada; continuam pendentes compilação/build, integração/runtime e validação visual no Windows. Não marcar como tarefa concluída/jogável até evidência de execução.
 
 ## Pedido ativo
 
@@ -25,6 +25,7 @@ Entregar somente o fluxo funcional: **LOGIN → LOBBY COM TODOS OS PERSONAGENS �
 - `npm run check`: **passou, 29/29**, após atualizar o runner/protocolo; avisos ESM são não bloqueantes.
 - Parse C# via tree-sitter (sintaxe somente): `CSHARP_TREE_SITTER_SYNTAX_OK` para todos os `.cs`; não é compilação nem type-check.
 - Análise estática do Coast: 1.849 triângulos; centro e oito amostras do spawn estão em superfície navegável na origem extraída. Não prova execução Godot ou colisão física real.
+- `git diff --check`: passou antes dos commits; push normal para `origin/arena/b2f4e6da-projetorpg` concluído. Commits: `e91cd0d` (implementação) e `fc1cf37` (documentação/checkpoint). A árvore estava limpa após o push; nenhum commit em main/force-push.
 - `npm run test:phase1`: **bloqueado, código 2**, `.NET SDK is unavailable`; Docker também indisponível. Nenhum build, migration PostgreSQL ou execução HTTP/WebSocket do servidor novo foi observada.
 - `npm run test:target:client`: **bloqueado, código 2**, executável Godot 4 .NET ausente. Nenhum build C#/Godot, import, abrir cena ou gameplay visual foi observado.
 - `dotnet`, `godot`, `godot4`, `csc`, `mcs`, `mono`, Docker e PostgreSQL não estão disponíveis no Agent.
@@ -32,11 +33,10 @@ Entregar somente o fluxo funcional: **LOGIN → LOBBY COM TODOS OS PERSONAGENS �
 
 ## Próximas ações — não pular
 
-1. Revisar C# semanticamente e diff completo; reexecutar `npm run check`, teste geométrico e `git diff --check`.
-2. Na cópia descartável Windows, build Shared/server/client com versões da ADR; executar `npm run test:phase1` em Docker/PostgreSQL descartável e corrigir todos os erros reais. Aplicar migration `0002` apenas ao DB de teste.
-3. Abrir/importar Godot 4.7.2 Mono, testar cena de gameplay/Coast e fluxo com servidor real. Provar login, lista completa/seleção, autorização/ownership, entrada/idempotência, spawn, WASD/setas, bloqueio de borda/obstáculos, câmera/orientação/Idle/Walking, disconnect/reconnect, leave e retorno ao lobby. Capturar evidências/logs/versões/SHAs reais.
-4. Só então declarar o critério não negociável satisfeito. Distinguir teste Agent, build .NET, import Godot, execução automatizada e inspeção visual Windows.
-5. Publicar commits revisáveis apenas em `arena/b2f4e6da-projetorpg`; nunca trocar branch, push para main, force-push ou alterar PR sem pedido explícito.
+1. Na cópia descartável Windows, compilar Shared/server/client com versões da ADR; executar `npm run test:phase1` em Docker/PostgreSQL descartável e corrigir erros reais. Aplicar migration `0002` apenas ao DB de teste.
+2. Abrir/importar Godot 4.7.2 Mono e validar cena de gameplay/Coast e fluxo com servidor real. Provar login, lista completa/seleção, autorização/ownership, entrada/idempotência, spawn, WASD/setas, bloqueio de borda/obstáculos, câmera/orientação/Idle/Walking, disconnect/reconnect, leave e retorno ao lobby. Capturar evidências/logs/versões/SHAs reais.
+3. Só então declarar o critério não negociável satisfeito. Distinguir teste Agent, build .NET, import Godot, execução automatizada e inspeção visual Windows.
+4. Correções futuras devem ser commits revisáveis somente em `arena/b2f4e6da-projetorpg`; nunca trocar branch, push para main, force-push ou alterar PR sem pedido explícito.
 
 ## Preservação e workspaces
 
@@ -48,5 +48,6 @@ Entregar somente o fluxo funcional: **LOGIN → LOBBY COM TODOS OS PERSONAGENS �
 ## Histórico resumido
 
 - Branch já publicou lobby account-backed, importação seletiva de Coast e documentação parcial antes desta etapa (commits prévios `0bff34d`, `a1cb78d`, `bd55328` na linha de integração). Entrada e gameplay ainda não existiam quando esta etapa começou.
+- O checkpoint anterior de 698 linhas foi preservado em `docs/archive/CHECKPOINT-pre-gameplay-2026-10-29.md`; estados antigos são apenas históricos.
 - Este checkpoint substitui relatos antigos de “botão bloqueado/nenhum world endpoint” quanto ao **código atual do clone**, mas não transforma implementação não compilada em evidência executável.
 - A fonte de critérios do usuário é a sessão Arena; o contrato e README detalham o corte atual e seus limites. Fases futuras do MMORPG seguem fora desta tarefa.

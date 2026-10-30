@@ -2,7 +2,7 @@
 
 ## Resultado
 
-Foi escrito no clone de integração um primeiro fluxo completo em código: autenticação/account lobby preexistente, seleção de registro real, entrada REST autenticada, sessão PostgreSQL idempotente, seleção Coast/spawn pelo servidor, canal WebSocket autenticado v2, intents direcionais com tick/speed/navigation validados, cena Godot própria para Coast, ator controlado por snapshots, câmera/animação, reconexão e retorno ao lobby.
+Foi escrita no clone de integração uma primeira implementação integrada do fluxo: autenticação/account lobby preexistente, seleção de registro real, entrada REST autenticada, sessão PostgreSQL idempotente, seleção Coast/spawn pelo servidor, canal WebSocket autenticado v2, intents direcionais com tick/speed/navigation validados, cena Godot própria para Coast, ator controlado por snapshots, câmera/animação, reconexão e retorno ao lobby.
 
 **Status honesto:** implementação **não compilada nem executada nesta etapa**. Portanto o critério final “login → seleção → entrar em Coast → caminhar com colisões” ainda **não está comprovado e não pode ser declarado concluído/jogável**. Próximo bloqueio material é toolchain/teste Windows, não escopo adicional.
 
@@ -51,6 +51,8 @@ Executados neste Agent:
 - `npm run test:phase1`: bloqueado com código 2 porque `.NET SDK is unavailable`; Docker/PostgreSQL também não estão disponíveis.
 - `npm run test:target:client`: bloqueado com código 2 porque Godot 4 .NET/Mono não está disponível.
 - Busca PATH/pastas: `dotnet`, `godot`, `godot4`, `csc`, `mcs`, `mono` ausentes.
+
+- `git diff --check`: passou; publicados na branch autorizada `arena/b2f4e6da-projetorpg` os commits `e91cd0d` (implementação) e `fc1cf37` (documentação/checkpoint).
 
 Nada nesta seção prova que C#/Godot compilam, que PostgreSQL aceita migration 2, que endpoints executam ou que a cena renderiza/move em runtime. Sem resultado de build, import, gameplay real ou inspeção visual no Windows nesta etapa.
 
