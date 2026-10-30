@@ -1,0 +1,19 @@
+{
+  "id": "world.coast",
+  "enabled": true,
+  "displayName": "Coast",
+  "navigationId": "world.coast.navigation",
+  "spawns": [
+    {
+      "id": "coast.initial",
+      "position": {
+        "x": 0.148617,
+        "y": 2.25,
+        "z": 51.4204
+      }
+    }
+  ],
+  "walkSpeed": 3.5,
+  "agentRadius": 0.32,
+  "sourceCommit": "73bea81341846341f302dfa184e33d31733c3fa8"
+}

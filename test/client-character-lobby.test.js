@@ -8,6 +8,7 @@ const summary = readFileSync(new URL('../client/Scripts/CharacterSummary.cs', im
 const scene = readFileSync(new URL('../client/Scenes/CharacterLobby.tscn', import.meta.url), 'utf8');
 const environment = readFileSync(new URL('../client/Scenes/CharacterLobbyEnvironment.tres', import.meta.url), 'utf8');
 const endpoints = readFileSync(new URL('../server/Accounts/AccountEndpoints.cs', import.meta.url), 'utf8');
+const worldEndpoints = readFileSync(new URL('../server/World/WorldEndpoints.cs', import.meta.url), 'utf8');
 const serverProgram = readFileSync(new URL('../server/Program.cs', import.meta.url), 'utf8');
 const bootstrap = readFileSync(new URL('../client/Scripts/Bootstrap.cs', import.meta.url), 'utf8');
 const project = readFileSync(new URL('../client/project.godot', import.meta.url), 'utf8');
@@ -74,7 +75,7 @@ test('the account lobby creates one isolated idle 3D preview card for every serv
 });
 
 test('loading, empty, failure, retry, logout, and account switching states are represented', () => {
-  for (const text of ['SetLoading(bool loading)', 'SetLoadFailure(string message)', 'SetStatus(string message, bool isError = false)', 'RefreshRequested', 'CreateRequested', 'LogoutRequested'])
+  for (const text of ['SetLoading(bool loading)', 'SetLoadFailure(string message)', 'SetStatus(string message, bool isError = false)', 'RefreshRequested', 'CreateRequested', 'LogoutRequested', 'EnterWorldRequested'])
     assert.ok(lobby.includes(text), `missing lobby state/hook: ${text}`);
   assert.match(lobby, /Esta conta ainda não tem personagens/);
   assert.match(client, /Falha de conexão ao carregar personagens/);
@@ -101,10 +102,14 @@ test('logout clears local account state even when remote revocation throws', () 
   assert.ok(logout.indexOf('ClearLocalSession()') < logout.indexOf('SetStatus(serverRevoked'));
 });
 
-test('world entry remains disabled until the full authoritative session, map, spawn, and movement contract exists', () => {
-  assert.match(lobby, /Entrar no mundo — em implementação/);
-  assert.match(lobby, /_enterWorldButton\.Disabled = true/);
-  assert.match(lobby, /A entrada permanece bloqueada até haver validação server-authoritative/);
-  assert.doesNotMatch(`${endpoints}\n${serverProgram}`, /Map(?:Post|Get|Put|Patch)\("\/api\/v1\/world/);
+test('world entry is gated by a real selected character and backed by authenticated server routes', () => {
+  assert.match(lobby, /Entrar no mundo/);
+  assert.match(lobby, /_enterWorldButton\.Disabled = _busy \|\| !CanEnterWorld\(\)/);
+  assert.match(lobby, /characters\.Any\(character => string\.Equals\(character\.CharacterId, selectedId/);
+  assert.match(lobby, /EnterWorldRequested\?\.Invoke/);
+  assert.match(client, /TryReadWorldSnapshot/);
+  assert.match(worldEndpoints, /MapPost\("\/api\/v1\/world\/sessions"/);
+  assert.match(worldEndpoints, /MapDelete\("\/api\/v1\/world\/sessions\//);
+  assert.match(serverProgram, /app\.MapWorldEndpoints\(\)/);
   assert.doesNotMatch(endpoints, /Map(?:Post|Get|Put|Patch)\("\/api\/v1\/characters\/[^\"]+\/enter/);
 });

@@ -11,6 +11,7 @@ using ProjetoRpg.Server.Content;
 using ProjetoRpg.Server.Network;
 using ProjetoRpg.Server.Persistence;
 using ProjetoRpg.Server.Services;
+using ProjetoRpg.Server.World;
 
 var databaseCommand = DatabaseCommandRunner.IsDatabaseCommand(args);
 var builder = WebApplication.CreateBuilder(databaseCommand ? [] : args);
@@ -49,9 +50,11 @@ if (databaseCommand)
 var contentDirectory = Environment.GetEnvironmentVariable("GAME_CONTENT_DIRECTORY")
     ?? Path.Combine(AppContext.BaseDirectory, "content");
 ContentCatalog contentCatalog;
+WorldMapCatalog worldMapCatalog;
 try
 {
     contentCatalog = ContentCatalog.Load(contentDirectory);
+    worldMapCatalog = WorldMapCatalog.Load(contentCatalog);
 }
 catch (Exception exception) when (exception is InvalidDataException or JsonException or IOException)
 {
@@ -63,6 +66,9 @@ catch (Exception exception) when (exception is InvalidDataException or JsonExcep
 builder.Services.AddSingleton(configuration);
 builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(configuration.DatabaseConnectionString));
 builder.Services.AddSingleton(contentCatalog);
+builder.Services.AddSingleton(worldMapCatalog);
+builder.Services.AddSingleton<WorldSessionService>();
+builder.Services.AddSingleton<WorldConnectionRegistry>();
 builder.Services.AddSingleton<IPasswordHasher<AccountCredential>, PasswordHasher<AccountCredential>>();
 builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<CharacterService>();
@@ -110,7 +116,7 @@ app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSecond
 app.MapGet("/", () => Results.Ok(new
 {
     service = "ProjetoRPG dedicated server",
-    stage = "phase-1-foundation-in-progress",
+    stage = "coast-gameplay-in-progress",
     protocolVersion = ProjetoRpg.Shared.Protocol.ProtocolConstants.CurrentVersion
 }));
 app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));
@@ -161,8 +167,15 @@ app.MapGet("/health/content", (ContentCatalog catalog) => Results.Ok(new
     contentVersion = catalog.Version,
     entries = catalog.Entries.Count
 }));
+app.MapGet("/health/world", (WorldMapCatalog maps) => Results.Ok(new
+{
+    mapId = WorldSessionService.CoastMapId,
+    spawnId = WorldSessionService.CoastSpawnId,
+    available = maps.TryGetAvailableMap(WorldSessionService.CoastMapId, out var map) && map is not null
+}));
 app.MapGet("/ws", WebSocketEndpoint.HandleAsync);
 app.MapAccountEndpoints();
+app.MapWorldEndpoints();
 
 app.Lifetime.ApplicationStarted.Register(() =>
     app.Logger.LogInformation("ProjetoRPG server started; content {ContentVersion} ({EntryCount} entries)", contentCatalog.Version, contentCatalog.Entries.Count));

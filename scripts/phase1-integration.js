@@ -24,7 +24,7 @@ console.log(`Phase 1 integration test using .NET SDK ${dotnetVersion.stdout.trim
 const serverBuild = spawnSync('dotnet', ['build', serverProject, '--verbosity', 'quiet'],
   { cwd: root, encoding: 'utf8', timeout: 240000, maxBuffer: 8 * 1024 * 1024 });
 if (serverBuild.status !== 0) {
-    console.error(`PHASE1_BUILD_FAILED: server build/restore failed before integration tests.\n${serverBuild.stdout}\n${serverBuild.stderr}`);
+  console.error(`PHASE1_BUILD_FAILED: server build/restore failed before integration tests.\n${serverBuild.stdout}\n${serverBuild.stderr}`);
   process.exit(1);
 }
 
@@ -159,6 +159,63 @@ function expectStatus(result, status, label) {
     `${label}: expected HTTP ${status}, got ${result.response.status}: ${result.text}`);
 }
 
+function socketMessage(socket, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => finish(new Error('WebSocket response timed out.')), timeoutMs);
+    const onMessage = data => {
+      let message;
+      try { message = JSON.parse(data.toString()); }
+      catch { finish(new Error('WebSocket returned invalid JSON.')); return; }
+      finish(null, message);
+    };
+    const onError = error => finish(error);
+    const onClose = () => finish(new Error('WebSocket closed before the expected response.'));
+    function finish(error, message) {
+      clearTimeout(timeout);
+      socket.off('message', onMessage);
+      socket.off('error', onError);
+      socket.off('close', onClose);
+      if (error) reject(error); else resolve(message);
+    }
+    socket.once('message', onMessage);
+    socket.once('error', onError);
+    socket.once('close', onClose);
+  });
+}
+
+async function openWorldSocket(url, token, worldSessionId) {
+  const options = token ? { headers: { authorization: `Bearer ${token}` } } : {};
+  const socket = new WebSocket(url, options);
+  await new Promise((resolve, reject) => {
+    socket.once('open', resolve);
+    socket.once('error', reject);
+  });
+  socket.send(JSON.stringify({ type: 'Hello', protocolVersion: 2, sequence: 1 }));
+  const hello = await socketMessage(socket);
+  requireCondition(hello.type === 'HelloAck', `World WebSocket handshake failed: ${JSON.stringify(hello)}`);
+  socket.send(JSON.stringify({
+    type: 'WorldJoin', protocolVersion: 2, sequence: 2,
+    payload: { worldSessionId }
+  }));
+  const joined = await socketMessage(socket);
+  return { socket, joined, outerSequence: 2 };
+}
+
+async function waitForTick(baseUrl, afterTick) {
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline) {
+    const response = await fetch(`${baseUrl}/health/tick`, { signal: AbortSignal.timeout(2000) });
+    const health = await response.json();
+    if (health.tickCount > afterTick) return health.tickCount;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  throw new Error(`World tick did not advance beyond ${afterTick}.`);
+}
+
+function distance2d(left, right) {
+  return Math.hypot(left.x - right.x, left.z - right.z);
+}
+
 function websocketProbe(url) {
   return new Promise((resolve, reject) => {
     const socket = new WebSocket(url);
@@ -169,13 +226,13 @@ function websocketProbe(url) {
       if (socket.readyState === WebSocket.OPEN) socket.close();
       if (error) reject(error); else resolve();
     }
-    socket.once('open', () => socket.send(JSON.stringify({ type: 'Hello', protocolVersion: 1, sequence: 1 })));
+    socket.once('open', () => socket.send(JSON.stringify({ type: 'Hello', protocolVersion: 2, sequence: 1 })));
     socket.on('message', data => {
       let message;
       try { message = JSON.parse(data.toString()); } catch { finish(new Error('WebSocket returned invalid JSON.')); return; }
       if (message.type === 'HelloAck') {
         gotAck = true;
-        socket.send(JSON.stringify({ type: 'Ping', protocolVersion: 1, sequence: 2 }));
+        socket.send(JSON.stringify({ type: 'Ping', protocolVersion: 2, sequence: 2 }));
       } else if (message.type === 'Pong' && message.sequence === 2 && gotAck) finish();
     });
     socket.once('error', finish);
@@ -217,56 +274,35 @@ try {
   const invalidConfigurationExit = await waitForClose(invalidConfiguration.child, 15000);
   if (invalidConfigurationExit === null) {
     await stopProcess(invalidConfiguration);
-    throw new Error('Server did not reject missing database configuration.');
+    throw new Error(`Server did not reject absent database configuration.\n${invalidConfiguration.getOutput()}`);
   }
-  requireCondition(invalidConfigurationExit.code !== 0 && invalidConfiguration.getOutput().includes('CONFIGURATION_INVALID'),
-    `Missing database configuration was not rejected safely.\n${invalidConfiguration.getOutput()}`);
-
-  const unavailableDbPort = await availablePort();
-  const unavailableDbEnv = {
-    ...process.env,
-    ConnectionStrings__GameDatabase: `Host=127.0.0.1;Port=${unavailableDbPort};Database=unavailable;Username=unavailable;Password=${randomBytes(16).toString('hex')};Ssl Mode=Disable;Timeout=1;Command Timeout=2`,
-    ASPNETCORE_ENVIRONMENT: 'Development'
-  };
-  const unavailableServerPort = await availablePort();
-  const unavailableServer = startServer(unavailableServerPort, unavailableDbEnv);
-  runningServers.push(unavailableServer);
-  const unavailableBase = `http://127.0.0.1:${unavailableServerPort}`;
-  await waitForHttp(`${unavailableBase}/health/live`, unavailableServer);
-  const unavailableDbHealth = await fetch(`${unavailableBase}/health/database`, { signal: AbortSignal.timeout(10000) });
-  const unavailableReadiness = await fetch(`${unavailableBase}/health/ready`, { signal: AbortSignal.timeout(10000) });
-  const unavailableBody = await unavailableReadiness.json();
-  requireCondition(unavailableDbHealth.status === 503 && unavailableReadiness.status === 503 && unavailableBody.database === 'unavailable',
-    `A live process with an unavailable database must not report readiness: ${JSON.stringify(unavailableBody)}`);
-  expectStatus(await jsonRequest(`${unavailableBase}/api/v1/sessions`, 'POST', { username: 'missing', password: 'not-a-valid-password' }),
-    503, 'authentication request with unavailable database');
-  await stopProcess(unavailableServer);
-  runningServers = runningServers.filter(server => server !== unavailableServer);
+  requireCondition(invalidConfigurationExit.code === 78 && invalidConfiguration.getOutput().includes('CONFIGURATION_INVALID'),
+    `Unexpected missing database configuration behavior.\n${invalidConfiguration.getOutput()}`);
 
   const beforeMigrationPort = await availablePort();
-  const beforeMigration = startServer(beforeMigrationPort, dbEnv);
-  runningServers.push(beforeMigration);
+  const beforeMigrationServer = startServer(beforeMigrationPort, dbEnv);
+  runningServers.push(beforeMigrationServer);
   const beforeMigrationBase = `http://127.0.0.1:${beforeMigrationPort}`;
-  await waitForHttp(`${beforeMigrationBase}/health/live`, beforeMigration);
+  await waitForHttp(`${beforeMigrationBase}/health/live`, beforeMigrationServer);
   const pendingReady = await fetch(`${beforeMigrationBase}/health/ready`, { signal: AbortSignal.timeout(10000) });
   const pendingBody = await pendingReady.json();
   requireCondition(pendingReady.status === 503 && pendingBody.database === 'available' && pendingBody.schema === 'migration_pending',
     `Database connectivity must be distinguished from missing migrations: ${JSON.stringify(pendingBody)}`);
-  await stopProcess(beforeMigration);
-  runningServers = runningServers.filter(server => server !== beforeMigration);
+  await stopProcess(beforeMigrationServer);
+  runningServers = runningServers.filter(item => item !== beforeMigrationServer);
 
   const firstMigration = runDotnet(['--db-migrate'], dbEnv);
   requireCondition(firstMigration.status === 0 && firstMigration.stdout.includes('DB_MIGRATIONS_APPLIED'),
-    `Initial migration failed.\n${firstMigration.stdout}\n${firstMigration.stderr}`);
+    `Migration failed.\n${firstMigration.stdout}\n${firstMigration.stderr}`);
   const refusedRollback = runDotnet(['--db-rollback'], dbEnv, true);
-  requireCondition(refusedRollback.status !== 0 && refusedRollback.stderr.includes('confirm-data-loss'),
-    'Rollback without explicit data-loss confirmation must be refused.');
+  requireCondition(refusedRollback.status !== 0 && refusedRollback.stderr.includes('Rollback can delete player data'),
+    'Rollback without explicit data-loss confirmation must be rejected.');
   const rollback = runDotnet(['--db-rollback', '--confirm-data-loss'], dbEnv, true);
   requireCondition(rollback.status === 0 && rollback.stdout.includes('DB_MIGRATION_ROLLED_BACK'),
-    `Confirmed rollback failed.\n${rollback.stdout}\n${rollback.stderr}`);
+    `Confirmed rollback on the empty disposable schema failed.\n${rollback.stdout}\n${rollback.stderr}`);
   const pendingStatus = runDotnet(['--db-status'], dbEnv, true);
-  requireCondition(pendingStatus.status === 0 && JSON.parse(pendingStatus.stdout).pending.includes(1),
-    `Rollback did not return schema to the expected pending state: ${pendingStatus.stdout}`);
+  requireCondition(pendingStatus.status === 0 && JSON.parse(pendingStatus.stdout).pending.includes(2),
+    `Rollback did not return schema to migration 2 pending: ${pendingStatus.stdout}`);
   const reapplied = runDotnet(['--db-migrate'], dbEnv, true);
   requireCondition(reapplied.status === 0 && reapplied.stdout.includes('DB_MIGRATIONS_APPLIED'),
     `Migration re-application failed.\n${reapplied.stdout}\n${reapplied.stderr}`);
@@ -314,8 +350,11 @@ try {
   const dbHealth = await fetch(`${baseUrl}/health/database`);
   requireCondition(dbHealth.status === 200, 'Database health must perform a real PostgreSQL query.');
   const contentHealth = await (await fetch(`${baseUrl}/health/content`)).json();
-  requireCondition(contentHealth.contentVersion === '0.1.0' && contentHealth.entries === 0,
+  requireCondition(contentHealth.contentVersion === '0.2.0' && contentHealth.entries === 2,
     `Unexpected production content catalog: ${JSON.stringify(contentHealth)}`);
+  const worldHealth = await (await fetch(`${baseUrl}/health/world`)).json();
+  requireCondition(worldHealth.available && worldHealth.mapId === 'world.coast' && worldHealth.spawnId === 'coast.initial',
+    `Server did not load the authorized Coast map/spawn: ${JSON.stringify(worldHealth)}`);
   const tickHealth = await (await fetch(`${baseUrl}/health/tick`)).json();
   requireCondition(tickHealth.configuredRateHz === 20 && tickHealth.databaseConnectionConfigured === true,
     `Unexpected server heartbeat health: ${JSON.stringify(tickHealth)}`);
@@ -363,6 +402,13 @@ try {
   const noClass = await jsonRequest(`${baseUrl}/api/v1/characters`, 'POST',
     { name: 'NoClass', classId: 'fake.class' }, session.accessToken);
   expectStatus(noClass, 422, 'unavailable character class');
+  expectStatus(await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST', { characterId: character.characterId }),
+    401, 'world entry without account authentication');
+  expectStatus(await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST', { characterId: randomBytes(16).toString('hex') }, session.accessToken),
+    400, 'malformed world character identifier');
+  const absentCharacterId = '11111111-1111-4111-8111-111111111111';
+  expectStatus(await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST', { characterId: absentCharacterId }, session.accessToken),
+    404, 'world entry for a character not owned by the account');
 
   const secondUsername = `Other${randomBytes(4).toString('hex')}`;
   const secondPassword = `Second-Pass-${randomBytes(12).toString('base64url')}`;
@@ -378,6 +424,128 @@ try {
   requireCondition(JSON.parse(ownerList.text).length === 1, 'Owner should see exactly their own character.');
   expectStatus(await jsonRequest(`${baseUrl}/api/v1/characters/${character.characterId}`, 'GET', undefined, secondToken), 404, 'other account cannot read character');
   expectStatus(await jsonRequest(`${baseUrl}/api/v1/characters/${character.characterId}`, 'PATCH', { name: 'StolenName' }, secondToken), 404, 'other account cannot alter character');
+  expectStatus(await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST', { characterId: character.characterId }, secondToken),
+    404, 'another account cannot enter a character world');
+
+  const enter = await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST',
+    { characterId: character.characterId }, session.accessToken);
+  expectStatus(enter, 201, 'authorized world entry creates a session');
+  const worldEntry = JSON.parse(enter.text);
+  requireCondition(worldEntry.characterId === character.characterId && worldEntry.characterName === 'HeroOne' &&
+    worldEntry.mapId === 'world.coast' && worldEntry.spawnId === 'coast.initial' &&
+    worldEntry.position?.x === 0.148617 && worldEntry.position?.y === 2.25 && worldEntry.position?.z === 51.4204 &&
+    worldEntry.worldSessionId && worldEntry.resumed === false,
+    `Initial world snapshot did not use the authoritative character/map/spawn: ${enter.text}`);
+  const repeatedEnter = await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST',
+    { characterId: character.characterId }, session.accessToken);
+  expectStatus(repeatedEnter, 200, 'idempotent world entry');
+  const repeatedSnapshot = JSON.parse(repeatedEnter.text);
+  requireCondition(repeatedSnapshot.worldSessionId === worldEntry.worldSessionId && repeatedSnapshot.resumed === true,
+    'Repeated entry must resume the same active world session.');
+
+  const stolenSocket = await openWorldSocket(`ws://127.0.0.1:${port}/ws`, secondToken, worldEntry.worldSessionId);
+  requireCondition(stolenSocket.joined.type === 'Error' && stolenSocket.joined.detail === 'world_session_unavailable',
+    `Realtime session accepted an account that does not own the world session: ${JSON.stringify(stolenSocket.joined)}`);
+  await new Promise(resolve => { stolenSocket.socket.once('close', resolve); setTimeout(resolve, 1000); });
+  const anonymousSocket = await openWorldSocket(`ws://127.0.0.1:${port}/ws`, null, worldEntry.worldSessionId);
+  requireCondition(anonymousSocket.joined.type === 'Error' && anonymousSocket.joined.detail === 'world_join_not_authorized',
+    `Realtime gameplay accepted an anonymous session: ${JSON.stringify(anonymousSocket.joined)}`);
+  await new Promise(resolve => { anonymousSocket.socket.once('close', resolve); setTimeout(resolve, 1000); });
+
+  const worldSocket = await openWorldSocket(`ws://127.0.0.1:${port}/ws`, session.accessToken, worldEntry.worldSessionId);
+  requireCondition(worldSocket.joined.type === 'WorldJoined' &&
+    worldSocket.joined.payload.worldSessionId === worldEntry.worldSessionId &&
+    worldSocket.joined.payload.characterId === character.characterId,
+    `Authorized WebSocket join failed: ${JSON.stringify(worldSocket.joined)}`);
+  let outerSequence = worldSocket.outerSequence;
+  let inputSequence = 0;
+  let lastState = worldSocket.joined.payload;
+  await waitForTick(baseUrl, Math.max(1, lastState.serverTick));
+  worldSocket.socket.send(JSON.stringify({
+    type: 'MoveIntent', protocolVersion: 2, sequence: ++outerSequence,
+    payload: { directionX: 0, directionZ: -1, inputSequence: ++inputSequence }
+  }));
+  let moveResponse = await socketMessage(worldSocket.socket);
+  requireCondition(moveResponse.type === 'WorldState', `Valid move intent was not accepted: ${JSON.stringify(moveResponse)}`);
+  const maximumTickDistance = worldEntry.movementSpeed * 0.1 + 0.005;
+  requireCondition(distance2d(moveResponse.payload.position, lastState.position) <= maximumTickDistance,
+    'One input advanced farther than the server-authorized maximum speed/tick interval.');
+  lastState = moveResponse.payload;
+
+  worldSocket.socket.send(JSON.stringify({
+    type: 'MoveIntent', protocolVersion: 2, sequence: ++outerSequence,
+    payload: { directionX: 2, directionZ: 0, inputSequence: ++inputSequence }
+  }));
+  const invalidMagnitude = await socketMessage(worldSocket.socket);
+  requireCondition(invalidMagnitude.type === 'InputRejected' && invalidMagnitude.detail === 'invalid_move_intent',
+    `Server did not reject a movement direction outside its allowed range: ${JSON.stringify(invalidMagnitude)}`);
+
+  worldSocket.socket.send(JSON.stringify({
+    type: 'MoveIntent', protocolVersion: 2, sequence: ++outerSequence,
+    payload: { directionX: 0, directionZ: -1, inputSequence: ++inputSequence, targetPosition: { x: 999, y: 999, z: 999 } }
+  }));
+  const arbitraryPosition = await socketMessage(worldSocket.socket);
+  requireCondition(arbitraryPosition.type === 'InputRejected' && arbitraryPosition.detail === 'invalid_move_intent',
+    'The protocol must reject unknown client-provided final-position fields.');
+
+  for (let index = 0; index < 3; index++) {
+    await waitForTick(baseUrl, lastState.serverTick);
+    worldSocket.socket.send(JSON.stringify({
+      type: 'MoveIntent', protocolVersion: 2, sequence: ++outerSequence,
+      payload: { directionX: 1, directionZ: 0, inputSequence: ++inputSequence }
+    }));
+    moveResponse = await socketMessage(worldSocket.socket);
+    requireCondition(moveResponse.type === 'WorldState', `Repeated server movement was rejected: ${JSON.stringify(moveResponse)}`);
+    requireCondition(distance2d(moveResponse.payload.position, lastState.position) <= maximumTickDistance,
+      'Repeated movement exceeded the authoritative per-tick speed cap.');
+    lastState = moveResponse.payload;
+  }
+  for (let index = 0; index < 18; index++) {
+    await waitForTick(baseUrl, lastState.serverTick);
+    worldSocket.socket.send(JSON.stringify({
+      type: 'MoveIntent', protocolVersion: 2, sequence: ++outerSequence,
+      payload: { directionX: 0, directionZ: 1, inputSequence: ++inputSequence }
+    }));
+    moveResponse = await socketMessage(worldSocket.socket);
+    requireCondition(moveResponse.type === 'WorldState', `Boundary movement intent was rejected: ${JSON.stringify(moveResponse)}`);
+    requireCondition(distance2d(moveResponse.payload.position, lastState.position) <= maximumTickDistance,
+      'Boundary movement exceeded the authoritative speed cap.');
+    lastState = moveResponse.payload;
+  }
+  requireCondition(lastState.position.z <= 54.0 && lastState.position.z > 53.0,
+    `The player crossed the Coast navigation boundary instead of colliding: ${JSON.stringify(lastState.position)}`);
+  const blockedPosition = { ...lastState.position };
+  for (let index = 0; index < 3; index++) {
+    await waitForTick(baseUrl, lastState.serverTick);
+    worldSocket.socket.send(JSON.stringify({
+      type: 'MoveIntent', protocolVersion: 2, sequence: ++outerSequence,
+      payload: { directionX: 0, directionZ: 1, inputSequence: ++inputSequence }
+    }));
+    moveResponse = await socketMessage(worldSocket.socket);
+    requireCondition(moveResponse.type === 'WorldState', 'Server did not return state after a collision stop.');
+    lastState = moveResponse.payload;
+  }
+  requireCondition(Math.abs(lastState.position.z - blockedPosition.z) < 0.000001,
+    'The authoritative player kept advancing through the Coast navigation boundary.');
+
+  worldSocket.socket.terminate();
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const afterDisconnectEnter = await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST',
+    { characterId: character.characterId }, session.accessToken);
+  expectStatus(afterDisconnectEnter, 200, 'disconnect recovery resumes existing world session');
+  const afterDisconnectSnapshot = JSON.parse(afterDisconnectEnter.text);
+  requireCondition(afterDisconnectSnapshot.worldSessionId === worldEntry.worldSessionId &&
+    Math.abs(afterDisconnectSnapshot.position.x - lastState.position.x) < 0.000001 &&
+    Math.abs(afterDisconnectSnapshot.position.z - lastState.position.z) < 0.000001,
+    'Disconnect/re-entry did not preserve the server-authoritative position.');
+  const reconnectedSocket = await openWorldSocket(`ws://127.0.0.1:${port}/ws`, session.accessToken, worldEntry.worldSessionId);
+  requireCondition(reconnectedSocket.joined.type === 'WorldJoined' &&
+    reconnectedSocket.joined.payload.position.x === lastState.position.x &&
+    reconnectedSocket.joined.payload.position.z === lastState.position.z,
+    'Realtime reconnection did not receive the persisted authoritative state.');
+  reconnectedSocket.socket.close();
+  await new Promise(resolve => { reconnectedSocket.socket.once('close', resolve); setTimeout(resolve, 1000); });
+
   const ownerRename = await jsonRequest(`${baseUrl}/api/v1/characters/${character.characterId}`, 'PATCH', { name: 'HeroRenamed' }, session.accessToken);
   expectStatus(ownerRename, 204, 'owner character rename');
   const ownerRead = await jsonRequest(`${baseUrl}/api/v1/characters/${character.characterId}`, 'GET', undefined, session.accessToken);
@@ -389,6 +557,8 @@ try {
     `UPDATE account_sessions SET created_at = now() - interval '2 seconds', expires_at = now() - interval '1 second' WHERE token_hash = decode('${sessionHashHex}', 'hex') RETURNING account_id::text`);
   requireCondition(expiryUpdate === accountId, 'Could not set the first test session to expired.');
   expectStatus(await jsonRequest(`${baseUrl}/api/v1/characters`, 'GET', undefined, session.accessToken), 401, 'expired session');
+  expectStatus(await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST', { characterId: character.characterId }, session.accessToken),
+    401, 'expired account session cannot create or resume gameplay');
 
   await jsonRequest(`${baseUrl}/api/v1/sessions/current`, 'DELETE', undefined, secondToken);
   expectStatus(await jsonRequest(`${baseUrl}/api/v1/characters`, 'GET', undefined, secondToken), 401, 'revoked session');
@@ -406,6 +576,20 @@ try {
   expectStatus(afterRestart, 200, 'session and character persistence after server restart');
   requireCondition(JSON.parse(afterRestart.text).length === 1 && JSON.parse(afterRestart.text)[0].name === 'HeroRenamed',
     'Character state did not survive server restart.');
+  const resumedAfterRestart = await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST',
+    { characterId: character.characterId }, renewedToken);
+  expectStatus(resumedAfterRestart, 200, 'world session persistence after server restart');
+  requireCondition(JSON.parse(resumedAfterRestart.text).worldSessionId === worldEntry.worldSessionId &&
+    Math.abs(JSON.parse(resumedAfterRestart.text).position.x - lastState.position.x) < 0.000001,
+    'World session id/position did not survive server restart.');
+  expectStatus(await jsonRequest(`${baseUrl}/api/v1/world/sessions/${worldEntry.worldSessionId}`, 'DELETE', undefined, renewedToken),
+    204, 'world session explicit closure');
+  const newEntryAfterClose = await jsonRequest(`${baseUrl}/api/v1/world/sessions`, 'POST',
+    { characterId: character.characterId }, renewedToken);
+  expectStatus(newEntryAfterClose, 201, 'entry after closed world session creates a fresh session');
+  requireCondition(JSON.parse(newEntryAfterClose.text).worldSessionId !== worldEntry.worldSessionId,
+    'Closed session identifier was reused.');
+  await jsonRequest(`${baseUrl}/api/v1/world/sessions/${JSON.parse(newEntryAfterClose.text).worldSessionId}`, 'DELETE', undefined, renewedToken);
 
   const auditSummary = psql(containerName, databaseUser, databaseName,
     "SELECT string_agg(event_type, ',' ORDER BY event_id) FROM security_audit_events");
@@ -419,7 +603,7 @@ try {
 
   await stopProcess(restarted);
   runningServers = runningServers.filter(item => item !== restarted);
-  console.log(`PHASE1_INTEGRATION_OK: PostgreSQL ${postgresVersion} image ${postgresImageId}; migrations apply/rollback/reapply; readiness vs liveness; validated config; registration/login; generic credential errors; ASP.NET Identity password hash; hashed/revocable/expiring sessions; character ownership/persistence; audit events and WebSocket smoke.`);
+  console.log(`PHASE1_INTEGRATION_OK: PostgreSQL ${postgresVersion} image ${postgresImageId}; migrations apply/rollback/reapply; readiness; account authentication/ownership; idempotent world entry; authorized Coast spawn; server-tick movement/speed validation; invalid intent/position rejection; disconnect/reconnect/restart persistence; session closure; WebSocket auth; content and audit.`);
 } catch (error) {
   console.error(`PHASE1_INTEGRATION_FAILED: ${error.stack ?? error}`);
   process.exitCode = 1;

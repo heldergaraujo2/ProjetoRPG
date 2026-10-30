@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Godot;
+using ProjetoRpg.Shared.World;
 
 namespace ProjetoRpg.Client.Scripts;
 
@@ -19,6 +20,8 @@ public partial class AccountGateway : Control
     private Button _registerButton = null!;
     private Label _status = null!;
     private CharacterLobby? _lobby;
+    private WorldGameplay? _world;
+    private Guid? _activeWorldSessionId;
     private string? _accessToken;
     private string? _preferredCharacterId;
     private bool _busy;
@@ -150,11 +153,130 @@ public partial class AccountGateway : Control
         lobby.RefreshRequested += OnRefreshRequested;
         lobby.CreateRequested += OnCreateRequested;
         lobby.LogoutRequested += OnLogoutRequested;
+        lobby.EnterWorldRequested += OnEnterWorldRequested;
         AddChild(lobby);
         lobby.SetBusy(_busy);
     }
 
     private async void OnRefreshRequested() => await RunBusyAsync(RefreshCharactersAsync);
+
+    private async void OnEnterWorldRequested(string characterId)
+    {
+        if (!Guid.TryParse(characterId, out var selectedCharacterId)) return;
+        await RunBusyAsync(() => EnterWorldAsync(selectedCharacterId));
+    }
+
+    private async Task EnterWorldAsync(Guid characterId)
+    {
+        if (_accessToken is null || _lobby is null) return;
+        var body = JsonSerializer.Serialize(new EnterWorldRequest(characterId), _jsonOptions);
+        ApiResponse response;
+        try
+        {
+            response = await _api.SendAsync(Godot.HttpClient.Method.Post,
+                "/api/v1/world/sessions", body, _accessToken);
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or TaskCanceledException or TimeoutException)
+        {
+            _lobby.SetStatus("Não foi possível solicitar entrada no mundo. Nenhuma entrada local foi iniciada.", true);
+            return;
+        }
+        if (!IsNetworkSuccess(response))
+        {
+            _lobby.SetStatus("Falha de conexão ao solicitar entrada. O personagem continua no salão.", true);
+            return;
+        }
+        if (response.StatusCode == (long)HttpStatusCode.Unauthorized)
+        {
+            ExpireSession();
+            return;
+        }
+        if (response.StatusCode != (long)HttpStatusCode.Created && response.StatusCode != (long)HttpStatusCode.OK)
+        {
+            _lobby.SetStatus(DescribeApiError(response), true);
+            return;
+        }
+        if (!TryReadWorldSnapshot(response.Body, characterId, out var snapshot))
+        {
+            _lobby.SetStatus("O servidor não retornou um estado inicial autorizado válido. A entrada foi bloqueada.", true);
+            return;
+        }
+
+        try
+        {
+            var packedScene = ResourceLoader.Load<PackedScene>("res://Scenes/WorldGameplay.tscn")
+                ?? throw new InvalidOperationException("A cena de gameplay própria não está disponível.");
+            var world = packedScene.Instantiate<WorldGameplay>()
+                ?? throw new InvalidOperationException("A raiz da cena de gameplay não é WorldGameplay.");
+            world.Initialize(_api.BaseUrl, _accessToken, snapshot);
+            world.ReturnRequested += OnWorldReturnRequested;
+            _world = world;
+            _activeWorldSessionId = snapshot.WorldSessionId;
+            world.SetAnchorsPreset(LayoutPreset.FullRect);
+            _lobby.Visible = false;
+            AddChild(world);
+            _lobby.SetStatus($"Entrada autorizada em {snapshot.MapId}; sessão recuperada={snapshot.Resumed}.");
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or InvalidCastException)
+        {
+            await ReleaseWorldSessionAsync(snapshot.WorldSessionId);
+            if (_world is not null && GodotObject.IsInstanceValid(_world))
+                _world.QueueFree();
+            _world = null;
+            _activeWorldSessionId = null;
+            _lobby.Visible = true;
+            _lobby.SetStatus($"Entrada autorizada, mas a cena Coast não pôde ser carregada: {exception.Message}. Retorno ao salão.", true);
+        }
+    }
+
+    private async void OnWorldReturnRequested() => await RunBusyAsync(ReturnToLobbyAsync);
+
+    private async Task ReturnToLobbyAsync()
+    {
+        var remoteClosed = false;
+        if (_accessToken is not null && _activeWorldSessionId is { } worldSessionId)
+        {
+            try
+            {
+                var response = await _api.SendAsync(Godot.HttpClient.Method.Delete,
+                    $"/api/v1/world/sessions/{worldSessionId}", bearerToken: _accessToken);
+                remoteClosed = IsNetworkSuccess(response) && response.StatusCode == (long)HttpStatusCode.NoContent;
+            }
+            catch (Exception exception) when (exception is InvalidOperationException or TaskCanceledException or TimeoutException)
+            {
+                // The server expires inactive sessions after ten minutes; local return is never blocked.
+            }
+        }
+
+        if (_world is not null && GodotObject.IsInstanceValid(_world))
+        {
+            _world.ReturnRequested -= OnWorldReturnRequested;
+            _world.QueueFree();
+        }
+        _world = null;
+        _activeWorldSessionId = null;
+        if (_lobby is not null && GodotObject.IsInstanceValid(_lobby))
+        {
+            _lobby.Visible = true;
+            _lobby.SetStatus(remoteClosed
+                ? "Sessão de mundo encerrada no servidor. Você voltou ao salão."
+                : "Você voltou ao salão. O encerramento remoto não foi confirmado; a sessão expirará em até dez minutos.", !remoteClosed);
+        }
+    }
+
+    private async Task ReleaseWorldSessionAsync(Guid worldSessionId)
+    {
+        if (_accessToken is null) return;
+        try
+        {
+            await _api.SendAsync(Godot.HttpClient.Method.Delete,
+                $"/api/v1/world/sessions/{worldSessionId}", bearerToken: _accessToken);
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or TaskCanceledException or TimeoutException)
+        {
+            // The server-side grace period is the recovery path if explicit cleanup cannot be confirmed.
+        }
+    }
 
     private async void OnCreateRequested(string name)
     {
@@ -277,7 +399,7 @@ public partial class AccountGateway : Control
             _lobby.SetLoading(false);
             _lobby.SetStatus(characters.Count == 0
                 ? "Lista carregada do servidor: nenhum personagem nesta conta."
-                : $"Lista carregada do servidor: {characters.Count} personagem(ns). A seleção não inicia gameplay.");
+                : $"Lista carregada do servidor: {characters.Count} personagem(ns). Selecione um cartão para solicitar entrada em Coast.");
         }
         catch (JsonException)
         {
@@ -304,6 +426,7 @@ public partial class AccountGateway : Control
             _lobby.RefreshRequested -= OnRefreshRequested;
             _lobby.CreateRequested -= OnCreateRequested;
             _lobby.LogoutRequested -= OnLogoutRequested;
+            _lobby.EnterWorldRequested -= OnEnterWorldRequested;
             _lobby.QueueFree();
         }
         _lobby = null;
@@ -378,6 +501,31 @@ public partial class AccountGateway : Control
         }
     }
 
+    private bool TryReadWorldSnapshot(string body, Guid expectedCharacterId, out WorldSessionSnapshot snapshot)
+    {
+        snapshot = null!;
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<WorldSessionSnapshot>(body, _jsonOptions);
+            if (parsed is null || parsed.WorldSessionId == Guid.Empty || parsed.CharacterId != expectedCharacterId ||
+                !IsValidCharacterName(parsed.CharacterName) ||
+                !IsValidClassId(parsed.ClassId) || parsed.MapId != "world.coast" || parsed.SpawnId != "coast.initial" ||
+                !IsValidWorldPosition(parsed.Position) || !IsValidWorldPosition(parsed.Velocity) ||
+                parsed.MovementSpeed is <= 0 or > 10 || parsed.ServerTick < 0 || parsed.LastInputSequence < 0 ||
+                parsed.ExpiresAt <= DateTimeOffset.UnixEpoch)
+                return false;
+            snapshot = parsed;
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsValidWorldPosition(WorldPosition? position) =>
+        position is not null && double.IsFinite(position.X) && double.IsFinite(position.Y) && double.IsFinite(position.Z);
+
     private bool TryReadCharacter(string body, out CharacterSummary character)
     {
         character = new CharacterSummary(string.Empty, string.Empty, null);
@@ -451,6 +599,8 @@ public partial class AccountGateway : Control
             "invalid_character" => "Nome de personagem inválido. Use letra inicial e 3–20 letras, números ou sublinhados.",
             "name_unavailable" => "Esse nome de personagem já está em uso.",
             "class_unavailable" => "A classe solicitada ainda não está disponível.",
+            "character_not_found" => "O personagem não existe ou não pertence a esta conta.",
+            "world_unavailable" => "O mapa Coast ou o spawn autorizado não está disponível no servidor.",
             _ when response.StatusCode == (long)HttpStatusCode.TooManyRequests => "Muitas tentativas. Aguarde um pouco antes de tentar novamente.",
             _ when response.StatusCode >= 500 => "O servidor está temporariamente indisponível. Tente novamente mais tarde.",
             _ => $"A solicitação não foi concluída (HTTP {response.StatusCode})."

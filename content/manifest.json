@@ -1,5 +1,16 @@
 {
   "schemaVersion": 1,
-  "contentVersion": "0.1.0",
-  "entries": []
+  "contentVersion": "0.2.0",
+  "entries": [
+    {
+      "id": "world.coast",
+      "kind": "world_map",
+      "path": "worlds/coast.json"
+    },
+    {
+      "id": "world.coast.navigation",
+      "kind": "world_navigation",
+      "path": "worlds/coast-navigation.json"
+    }
+  ]
 }

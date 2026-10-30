@@ -7,8 +7,8 @@ namespace ProjetoRpg.Server.Persistence;
 public static class MigrationRunner
 {
     private const long AdvisoryLockKey = 731924108;
-    private const int LatestVersion = 1;
-    private static readonly MigrationDefinition[] Migrations = [new(1, "0001_initial")];
+    private const int LatestVersion = 2;
+    private static readonly MigrationDefinition[] Migrations = [new(1, "0001_initial"), new(2, "0002_world_sessions")];
 
     public static async Task ApplyAsync(NpgsqlDataSource dataSource, ILogger logger, CancellationToken cancellationToken = default)
     {

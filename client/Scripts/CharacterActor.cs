@@ -113,9 +113,30 @@ public partial class CharacterActor : CharacterBody3D
         }
     }
 
+    public void ApplyAuthoritativeState(Vector3 position, Vector3 velocity)
+    {
+        GlobalPosition = position;
+        Velocity = velocity;
+        var planarVelocity = new Vector3(velocity.X, 0.0f, velocity.Z);
+        if (planarVelocity.LengthSquared() > 0.0025f)
+        {
+            LookAt(GlobalPosition + planarVelocity.Normalized(), Vector3.Up);
+            PlayAnimation("Walking_A");
+        }
+        else
+        {
+            PlayAnimation("Idle");
+        }
+    }
+
     public override void _PhysicsProcess(double delta)
     {
-        if (!PlayerControlled || !_hasDestination)
+        if (!PlayerControlled)
+        {
+            Velocity = Vector3.Zero;
+            return;
+        }
+        if (!_hasDestination)
         {
             Velocity = Vector3.Zero;
             MoveAndSlide();

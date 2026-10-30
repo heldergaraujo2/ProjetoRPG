@@ -8,6 +8,7 @@ public partial class CharacterLobby : Control
     public event Action? RefreshRequested;
     public event Action<string>? CreateRequested;
     public event Action? LogoutRequested;
+    public event Action<string>? EnterWorldRequested;
 
     private GridContainer _characterCards = null!;
     private Label _emptyState = null!;
@@ -65,6 +66,7 @@ public partial class CharacterLobby : Control
             _selectedCharacterId = null;
             _selectedDetails.Text = "Nenhum personagem selecionado.";
             _emptyState.Text = "Esta conta ainda não tem personagens. Crie um usando o formulário abaixo.";
+            RefreshEnterButton();
             return;
         }
 
@@ -72,9 +74,15 @@ public partial class CharacterLobby : Control
             AddCharacterCard(character);
 
         var selected = characters.FirstOrDefault(character =>
-            string.Equals(character.CharacterId, preferredCharacterId ?? _selectedCharacterId, StringComparison.Ordinal))
-            ?? characters[0];
-        SelectCharacter(selected, updateStatus: false);
+            string.Equals(character.CharacterId, preferredCharacterId ?? _selectedCharacterId, StringComparison.Ordinal));
+        if (selected is not null)
+            SelectCharacter(selected, updateStatus: false);
+        else
+        {
+            _selectedCharacterId = null;
+            _selectedDetails.Text = "Clique em um cartão para selecionar um personagem válido.";
+            RefreshCardSelection();
+        }
         SetStatus($"{characters.Count} personagem(ns) carregado(s) da conta. Cada cartão é um registro real retornado pela API.");
     }
 
@@ -85,8 +93,9 @@ public partial class CharacterLobby : Control
         _refreshButton.Disabled = busy;
         _logoutButton.Disabled = busy;
         _newCharacterName.Editable = !busy;
-        // World entry remains gated until authenticated entry, server spawn, and authoritative movement are implemented.
-        _enterWorldButton.Disabled = true;
+        foreach (var button in _selectionButtons.Keys)
+            button.Disabled = busy;
+        RefreshEnterButton();
     }
 
     public void SetStatus(string message, bool isError = false)
@@ -206,10 +215,14 @@ public partial class CharacterLobby : Control
         _status = AddLabel(footer, string.Empty, 13);
         _status.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         _status.SizeFlagsVertical = SizeFlags.ShrinkCenter;
-        _enterWorldButton = AddButton(footer, "Entrar no mundo — em implementação", () => { });
+        _enterWorldButton = AddButton(footer, "Entrar no mundo", () =>
+        {
+            if (!_busy && CanEnterWorld())
+                EnterWorldRequested?.Invoke(_selectedCharacterId!);
+        });
         _enterWorldButton.CustomMinimumSize = new Vector2(260, 40);
         _enterWorldButton.Disabled = true;
-        _enterWorldButton.TooltipText = "A entrada permanece bloqueada até haver validação server-authoritative de sessão, ownership, mapa, spawn e movimento.";
+        _enterWorldButton.TooltipText = "Selecione um personagem retornado pelo servidor para solicitar entrada autorizada em Coast.";
         _logoutButton = AddButton(footer, "Trocar conta / sair", () =>
         {
             if (!_busy) LogoutRequested?.Invoke();
@@ -331,7 +344,7 @@ public partial class CharacterLobby : Control
         return viewportContainer;
     }
 
-    private static (string Path, float YawDegrees) ResolvePreviewModel(string? classId)
+    internal static (string Path, float YawDegrees) ResolvePreviewModel(string? classId)
     {
         // Class IDs are display hints only. Unknown/null classes use an explicitly
         // generic visual rather than inventing a class or additional character.
@@ -350,8 +363,19 @@ public partial class CharacterLobby : Control
             ? $"Selecionado: {character.Name}\nClasse não atribuída. A figura é uma prévia genérica, não aparência persistida."
             : $"Selecionado: {character.Name}\nClasse: {character.ClassId}\nA figura é uma prévia ilustrativa, não estado de gameplay.";
         RefreshCardSelection();
+        RefreshEnterButton();
         if (updateStatus)
-            SetStatus($"{character.Name} selecionado. A seleção não inicia sessão de mundo.");
+            SetStatus($"{character.Name} selecionado. Entrar no mundo solicitará autorização ao servidor.");
+    }
+
+    private bool CanEnterWorld() =>
+        _selectedCharacterId is { } selectedId && Guid.TryParse(selectedId, out _) &&
+        _characters.Any(character => string.Equals(character.CharacterId, selectedId, StringComparison.Ordinal));
+
+    private void RefreshEnterButton()
+    {
+        if (GodotObject.IsInstanceValid(_enterWorldButton))
+            _enterWorldButton.Disabled = _busy || !CanEnterWorld();
     }
 
     private void RefreshCardSelection()

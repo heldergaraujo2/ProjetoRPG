@@ -25,7 +25,7 @@ function connectAndHandshake(index) {
       clearTimeout(timeout);
       if (error) reject(error); else resolve(socket);
     }
-    socket.once('open', () => socket.send(JSON.stringify({ type: 'Hello', protocolVersion: 1, sequence: 1 })));
+    socket.once('open', () => socket.send(JSON.stringify({ type: 'Hello', protocolVersion: 2, sequence: 1 })));
     socket.once('message', data => {
       let message;
       try { message = JSON.parse(data.toString()); }

@@ -22,7 +22,7 @@ public static class DatabaseCommandRunner
                     Console.WriteLine(JsonSerializer.Serialize(new
                     {
                         applied,
-                        pending = new[] { 1 }.Except(applied.Select(item => item.Version)).ToArray()
+                        pending = new[] { 1, 2 }.Except(applied.Select(item => item.Version)).ToArray()
                     }));
                     return 0;
                 case "--db-rollback":
