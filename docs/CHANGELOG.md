@@ -126,3 +126,13 @@
 - Revisados estaticamente o controlador C#, a cena .tscn e o lobby principal. O port continua isolado; ainda não foi integrado a `CharacterLobby.cs`.
 - Nenhum build/import/teste visual foi executado nesta retomada; não há confirmação de atualização da cópia Windows. Nenhum arquivo local foi alterado.
 - Próximo passo: atualizar com fetch + fast-forward somente se a cópia de teste estiver na branch correta e limpa; compilar o cliente; executar a cena isolada e enviar captura. Integração ao lobby real somente após aprovação dessa etapa.
+
+
+## 2026-10-30 — Cartões account-backed e importação seletiva Coast
+
+- `CharacterLobby.cs` renderiza um cartão 3D independente por personagem retornado pela API, com modelo, Idle, nome/informações, botão e destaque. Nenhum personagem é inventado para preencher a grade.
+- `AccountGateway.cs` recusa GUIDs inválidos/duplicados, nome e `classId` fora do contrato; APIs de conta seguem sem migration ou mudança de autenticação.
+- Importados seletivamente Coast, colisões, NavigationMesh e água no commit upstream `73bea81341846341f302dfa184e33d31733c3fa8`; notices MIT preservados. Sistemas Player/componentes/respawn/inimigos/itens do original foram excluídos.
+- Testes estáticos de conteúdo/licenças/paths/colisores/polígonos não substituem build/import/visual Godot.
+- **Entrada no mundo continua não implementada** (sem rota, sessão, ownership de sessão de mundo, mapa/spawn autoritários, snapshot, reconexão ou movimento server-authoritative); botão desabilitado. `Bootstrap.tscn` continua principal.
+- Pendente: build/import Godot 4.7.2 Mono e revisão visual/física Windows, mais implementação/teste da fatia server-authoritative.

@@ -1,3 +1,18 @@
+## Estado operacional mais recente — 2026-10-30 (em andamento)
+
+Branch de trabalho: `arena/b2f4e6da-projetorpg`; clone limpo `/home/user/ProjetoRPG-integration-20261030`. Workspace oficial `/home/user/ProjetoRPG` contém diferenças locais não reconciliadas; não stagear em bloco. Clone JDungeon3D: `/home/user/jdungeon3d-source-20261030`, commit `73bea81341846341f302dfa184e33d31733c3fa8`.
+
+- **Lobby:** cartão SubViewport para cada personagem real retornado pela API, seleção/destaque individual e ator Idle; nenhum personagem inventado. `classId` null/desconhecido usa modelo genérico rotulado; aparência não é persistida. Validação de campos/IDs reforçada.
+- **Mapa:** Coast importada seletivamente em `client/Assets/Worlds/JDungeon3D-Coast/` (GLB, colisão estática, NavigationMesh, água e notices MIT). Player/ComponentList/respawn/Kelp/Mushroomdog/sistemas de gameplay foram excluídos. `Bootstrap.tscn` preservada.
+- **Entrada no mundo:** NÃO implementada. Sem endpoint, sessão, ownership na entrada, mapa no servidor, spawn autorizado, snapshot, autenticação realtime, idempotência, expiração/reconexão ou movimento server-authoritative. Botão desabilitado; Coast não está no fluxo.
+- **Testes Agent:** `npm ci` passou; `npm run check` **24/24 testes Node passou**; `git diff --check` passou. São checks estáticos e um smoke do protótipo Node, não build C#/Godot nem gameplay. `godot`, `godot4` e `dotnet` ausentes.
+- **Windows:** não acessível ao agente. Usar somente `D:\ProjetoRPG-Teste-Lobby`, verificar árvore/branch antes de fast-forward; nunca acessar `D:\AProjeto RPG Fixo`. Comandos em `docs/reports/IMPLEMENTACAO_LOBBY_COAST_2026-10-30.md`.
+- **Publicação:** SHA remoto será preenchido após revisão e push somente na branch autorizada.
+
+Detalhes: `docs/reports/IMPLEMENTACAO_LOBBY_COAST_2026-10-30.md`, `docs/AVALIACAO_MAPAS_3D_2026-10-29.md` e `docs/CONTRATO_FUTURO_SESSAO_GAMEPLAY.md`.
+
+---
+
 # CHECKPOINT — AJUSTE VISUAL DO LOBBY — 2026-10-29
 
 ## Atualização publicada para teste Windows

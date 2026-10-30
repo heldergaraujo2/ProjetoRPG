@@ -51,3 +51,12 @@ Testes estáticos, renderização do lobby, inicialização do Bootstrap ou uma 
 ## Critério para o cliente
 
 Só habilitar o botão depois de a especificação e o endpoint autoritativo existirem e os testes de aceitação passarem. O cliente envia a identidade do personagem selecionado, apresenta sucesso apenas após confirmação do servidor e renderiza o snapshot recebido. Uma falha deve manter o usuário no lobby sem fabricar posição, spawn ou sessão. Movimento e mutações subsequentes também exigirão validação/autorização do servidor; o ingresso não os torna automaticamente seguros.
+
+
+## Atualização de estado — 2026-10-30
+
+O lobby agora mantém seleção visual account-backed por personagem; isso não altera os invariantes acima nem cria sessão de jogo. A importação Coast contém um marcador de spawn de cena em `(0.148617, 2.25, 51.4204)`, escolhido por análise estática porque cai sobre um triângulo da NavigationMesh original. **Esse marcador é somente dado de cena e não é spawn autorizado pelo servidor.** A API atual não publica mapa, world session, posição ou snapshot e o WebSocket ainda só oferece Hello/Ping/Bye anônimo.
+
+O botão continua desabilitado. Antes de habilitá-lo, decidir e implementar versionadamente a transação de ingresso, validação da sessão bearer e ownership, mapa ativo no catálogo do servidor, escolha/revalidação do spawn, idempotência concorrente, armazenamento/expiração/reconexão/revogação e vínculo de identidade do canal realtime. Em seguida, implementar movimento por intenção com estado/velocidade/collision/navigation calculados pelo servidor, sincronização do snapshot e comportamento seguro após desconexão/restart. Não aceitar posição final enviada pelo cliente.
+
+A prova de que o ponto está em um triângulo é estática e não prova que o mapa importe, que o ponto esteja no chão visual, que o ator caiba, nem que caminho/collision funcionem. Godot 4.7.2 Mono, .NET, DB integration e prova visual/física permanecem pendentes. Os critérios de aceitação anteriores seguem obrigatórios e nenhum route/body proposto neste arquivo é endpoint existente.

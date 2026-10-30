@@ -30,3 +30,12 @@ Arquitetura: componentes reutilizáveis + "view model" ligado a eventos do servi
 ## Teste de cliente
 - Cena de teste "sandbox" sem servidor para UI e renderização.
 - Modo headless para testes automatizados de lógica de cliente (net, parsing).
+
+
+## Estado operacional do lobby 3D — 2026-10-30
+
+A cena oficial `CharacterLobby.tscn` continua sob `Bootstrap.tscn` e agora constrói um cartão/viewport por cada registro validado de `GET /api/v1/characters`. O cartão apresenta nome, classe retornada (ou “Sem classe”), uma prévia Idle e ação/destaque de seleção. Registros não são criados no cliente. A classe/catalogo real continua vazio; modelos Barbarian/Mage só são prévias visuais, e `classId` ausente/desconhecido não vira atributo nem identidade de gameplay.
+
+O ambiente Coast incorporado em `client/Assets/Worlds/JDungeon3D-Coast/` é cenário estático com colisores e NavigationMesh; não é atualmente carregado pelo lobby, não contém ator do ProjetoRPG nem autoriza movimento. `CharacterDemo.tscn` permanece demo local e não é usada como gameplay.
+
+**Gate:** o botão “Entrar no mundo” permanece desabilitado. O servidor não implementa ingresso, world session, ownership de sessão de mundo, mapa/spawn autorizados, sessão realtime, reconexão ou movimento autoritativo. O cliente não calcula posição definitiva. Validação visual/layout/import Godot e runtime continuam pendentes no Windows.

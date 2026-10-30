@@ -73,3 +73,10 @@ Aceitação: beta com jogadores reais sem bugs críticos abertos.
 2. Cada fase termina com relatório + CHECKPOINT atualizado.
 3. Escopo novo vai para a "Lista de Ideias" no CHECKPOINT; só entra no roteiro por decisão explícita.
 4. Se uma fase ficar enorme, quebre em sub-fases (ex.: 4a monstros, 4b skills, 4c estados).
+
+
+## Atualização de estado — integração visual/mapa (2026-10-30)
+
+A seleção account-backed foi evoluída para cartões 3D dinâmicos de todos os registros recebidos, sem preenchimento fictício, e Coast foi importada seletivamente com colisões/NavigationMesh/licenças. Isso é **progresso parcial da Fase 2 e preparação de conteúdo para Fase 3**, não critério de aceitação concluído.
+
+Continuam pendentes: importação/compilação/validação Godot 4.7.2 Mono; actor/câmera/controlador do ProjetoRPG na Coast; API de entrada server-authoritative; autenticação realtime; sessão/ownership, mapa disponível, spawn, snapshot, idempotência, expiração/reconexão e movimento/pathfinding com validação de colisão no servidor. Enquanto qualquer gate faltar, “Entrar no mundo” permanece desabilitado e a fase não é declarada concluída. Ver `docs/CONTRATO_FUTURO_SESSAO_GAMEPLAY.md`.
