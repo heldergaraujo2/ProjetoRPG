@@ -115,6 +115,7 @@ public partial class WorldGameplay : Control
         var coast = coastScene.Instantiate<Node3D>()
             ?? throw new InvalidOperationException("A cena CoastWorld não possui raiz Node3D.");
         coast.Name = "CoastWorld";
+        CoastMaterialFallback.Apply(coast);
         _worldRoot.AddChild(coast);
 
         var actorScene = ResourceLoader.Load<PackedScene>("res://Scenes/CharacterActor.tscn")

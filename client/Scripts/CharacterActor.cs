@@ -55,6 +55,9 @@ public partial class CharacterActor : CharacterBody3D
         }
         else
         {
+            SetAnimationToLoop("Idle");
+            SetAnimationToLoop("Walking_A");
+            SetAnimationToLoop("Running_A");
             PlayAnimation("Idle");
         }
 
@@ -166,6 +169,19 @@ public partial class CharacterActor : CharacterBody3D
         LookAt(GlobalPosition + direction, Vector3.Up);
         MoveAndSlide();
         PlayAnimation(distance >= RunDistanceThreshold ? "Running_A" : "Walking_A");
+    }
+
+    private void SetAnimationToLoop(StringName animationName)
+    {
+        if (_animationPlayer is null || !_animationPlayer.HasAnimation(animationName))
+        {
+            return;
+        }
+
+        // Imported glTF clips default to one-shot playback in Godot. Movement
+        // snapshots keep selecting the same clip, so make locomotion cycles loop
+        // instead of letting the actor slide after the first animation finishes.
+        _animationPlayer.GetAnimation(animationName).LoopMode = Animation.LoopModeEnum.Linear;
     }
 
     private void PlayAnimation(StringName animationName)
