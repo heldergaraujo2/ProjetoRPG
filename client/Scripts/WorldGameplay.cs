@@ -52,13 +52,7 @@ public partial class WorldGameplay : Control
 
     public override void _Process(double delta)
     {
-        if (_worldViewport is not null)
-        {
-            var viewportSize = GetViewportRect().Size;
-            _worldViewport.Size = new Vector2I(Math.Max(1, Mathf.RoundToInt(viewportSize.X)), Math.Max(1, Mathf.RoundToInt(viewportSize.Y)));
-        }
-
-        if (_player is not null && _camera is not null)
+if (_player is not null && _camera is not null)
         {
             _camera.GlobalPosition = _player.GlobalPosition + new Vector3(0, 8.5f, 12.0f);
             _camera.LookAt(_player.GlobalPosition + new Vector3(0, 1.0f, 0), Vector3.Up);
