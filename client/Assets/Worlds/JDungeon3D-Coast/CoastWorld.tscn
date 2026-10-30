@@ -53,7 +53,7 @@ mesh = SubResource("PlaneMesh_d1tox")
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_yam51")
 
-[node name="CoastModel" parent="NavigationRegion3D" instance=ExtResource("coast_model")]
+[node name="CoastModel" parent="." instance=ExtResource("coast_model")]
 
 [node name="SpawnReference" type="Marker3D" parent="."]
 position = Vector3(0.148617, 2.25, 51.4204)
