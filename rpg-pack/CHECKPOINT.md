@@ -7,9 +7,9 @@
 - Data da última atualização: (preencher)
 
 ## PRÓXIMO PASSO EXATO
-1. Ler 02_ARQUITETURA.md e confirmar ou ajustar a stack proposta com um ADR (docs/adr/ADR-001-stack.md).
-2. Inicializar repositório git e a estrutura de pastas descrita em 02_ARQUITETURA.md.
-3. Criar script de build único e primeiro teste "hello" do servidor e do cliente.
+1. Ler docs/MASTER_PLAN.md e docs/phases/PHASE-00.md, além dos documentos obrigatórios listados na especificação.
+2. Auditar a árvore real, o estado Git, o ambiente e os projetos existentes sem sobrescrever trabalho.
+3. Validar a stack proposta e registrar a decisão em docs/adr/ADR-001-stack.md antes de criar ou mover estrutura.
 
 ## Decisões tomadas (ADRs)
 (nenhuma ainda. Proposta inicial em 02_ARQUITETURA.md, a confirmar)
@@ -44,4 +44,4 @@
 (nenhuma)
 
 ## Histórico resumido (acrescentar, nunca apagar)
-(vazio)
+- 2026-11-05: documentação de planejamento preparada na branch docs/plan: docs/MASTER_PLAN.md, docs/CONTINUITY.md e docs/phases/PHASE-00.md. Fase 0 continua NÃO INICIADA; nenhuma auditoria técnica, build, teste ou implementação de gameplay foi executada nesta alteração.
