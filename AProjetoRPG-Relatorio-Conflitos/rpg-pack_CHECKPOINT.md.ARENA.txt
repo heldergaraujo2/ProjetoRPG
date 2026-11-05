@@ -1,0 +1,50 @@
+﻿# CHECKPOINT ÔÇö ESTADO INICIAL DO PACOTE OFICIAL (ARQUIVADO)
+
+> Este arquivo ├® a c├│pia inicial importada de `origin/main` commit `9ac6d53`; ele registra a situa├º├úo antes do trabalho desta branch e n├úo ├® a fonte operacional atual. O checkpoint can├┤nico de continuidade est├í em [`../CHECKPOINT.md`](../CHECKPOINT.md), na raiz do reposit├│rio. N├úo manter status divergente aqui.
+
+(O texto abaixo foi preservado como evid├¬ncia do pacote original.)
+
+## Status geral
+- Fase atual: FASE 0 ÔÇö Prepara├º├úo
+- ├Ültima tarefa conclu├¡da: (nenhuma)
+- Data da ├║ltima atualiza├º├úo: (preencher)
+
+## PR├ôXIMO PASSO EXATO
+1. Ler 02_ARQUITETURA.md e confirmar ou ajustar a stack proposta com um ADR (docs/adr/ADR-001-stack.md).
+2. Inicializar reposit├│rio git e a estrutura de pastas descrita em 02_ARQUITETURA.md.
+3. Criar script de build ├║nico e primeiro teste "hello" do servidor e do cliente.
+
+## Decis├Áes tomadas (ADRs)
+(nenhuma ainda. Proposta inicial em 02_ARQUITETURA.md, a confirmar)
+
+## Ambiente
+- SO / engine / vers├Áes: (preencher na Fase 0)
+- Comandos: build = (preencher) | testes = (preencher) | rodar servidor = (preencher) | rodar cliente = (preencher)
+
+## Progresso por fase
+| Fase | Estado | Observa├º├Áes |
+|---|---|---|
+| 0 Prepara├º├úo | N├âO INICIADA | |
+| 1 Funda├º├úo do servidor | N├âO INICIADA | |
+| 2 Cliente base e login | N├âO INICIADA | |
+| 3 Mundo e movimento | N├âO INICIADA | |
+| 4 Combate, monstros, skills | N├âO INICIADA | |
+| 5 Itens, invent├írio, drop, lojas | N├âO INICIADA | |
+| 6 Progress├úo e classes | N├âO INICIADA | |
+| 7 Social | N├âO INICIADA | |
+| 8 Refino, crafting, op├º├Áes | N├âO INICIADA | |
+| 9 PvP, PK, ranking | N├âO INICIADA | |
+| 10 Quests, NPCs, bosses | N├âO INICIADA | |
+| 11 Eventos | N├âO INICIADA | |
+| 12 Ferramentas de conte├║do | N├âO INICIADA | |
+| 13 Performance, seguran├ºa, QA | N├âO INICIADA | |
+| 14 Polimento e lan├ºamento | N├âO INICIADA | |
+
+## PROBLEMAS ABERTOS
+(nenhum)
+
+## SUPOSI├ç├òES EM VIGOR
+(nenhuma)
+
+## Hist├│rico resumido (acrescentar, nunca apagar)
+(vazio)

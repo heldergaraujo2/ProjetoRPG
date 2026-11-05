@@ -1,0 +1,59 @@
+﻿# 14 ÔÇö PROMPTS PRONTOS (copiar e colar no Claude Code)
+
+## A) PROMPT DE IN├ìCIO DE SESS├âO (use SEMPRE que abrir uma sess├úo nova)
+```
+Leia CLAUDE.md e CHECKPOINT.md deste projeto. Resuma em at├® 10 linhas onde paramos. 
+Depois execute o "PR├ôXIMO PASSO EXATO" em tarefas pequenas. 
+Ao concluir cada tarefa: rode os testes, fa├ºa commit e atualize o CHECKPOINT.md.
+Se o limite de uso estiver perto, atualize o CHECKPOINT.md e crie o arquivo de sess├úo em checkpoints/ imediatamente.
+N├úo releia documentos que n├úo forem necess├írios.
+```
+
+## B) PROMPT DA FASE 0 (primeira vez)
+```
+Estamos na FASE 0. Leia 02_ARQUITETURA.md e 08_FASES.md (se├º├úo Fase 0).
+1) Escreva docs/adr/ADR-001-stack.md confirmando ou ajustando a stack proposta (decida r├ípido, com justificativa curta).
+2) Inicialize o git e crie a estrutura de pastas.
+3) Crie scripts de build e teste ├║nicos e um teste "hello" para servidor e cliente.
+4) Preencha em CHECKPOINT.md os comandos reais de build/teste/execu├º├úo e o pr├│ximo passo exato.
+Fa├ºa commits pequenos.
+```
+
+## C) PROMPT PARA AVAN├çAR DE FASE
+```
+A fase atual parece conclu├¡da. Verifique os crit├®rios de aceita├º├úo da fase em 08_FASES.md um por um, 
+execute os testes e gere docs/reports/faseNN.md com resultados e limita├º├Áes. 
+Se algum crit├®rio falhar, liste o que falta e corrija antes de avan├ºar. 
+S├│ quando tudo passar, marque a fase como CONCLU├ìDA no CHECKPOINT.md e defina o primeiro passo da pr├│xima fase.
+```
+
+## D) PROMPT PARA ADICIONAR CONTE├ÜDO
+```
+Adicione [descreva: ex. 5 espadas novas, o monstro X, o boss Y, uma quest Z] usando APENAS arquivos em content/ (sem alterar c├│digo). 
+Siga os exemplos de data_examples/ e rode o ContentValidator. Mostre como testar no jogo.
+```
+
+## E) PROMPT PARA CORRIGIR BUG
+```
+Reproduza este bug: [descri├º├úo]. Escreva primeiro um teste que falha, depois corrija, depois rode toda a su├¡te. 
+Commit e atualize CHECKPOINT.md se mudar algo relevante.
+```
+
+## F) PROMPT QUANDO A SESS├âO ANTERIOR TRAVOU NO MEIO
+```
+A sess├úo anterior foi interrompida. Rode git status e git log -5, compare com o CHECKPOINT.md, 
+verifique se h├í trabalho n├úo commitado, rode os testes e descreva o estado real. 
+Corrija inconsist├¬ncias entre c├│digo e CHECKPOINT.md antes de continuar.
+```
+
+## G) PROMPT DE BALANCEAMENTO
+```
+Rode a simula├º├úo de duelos em massa (bots, semente fixa) para todas as classes e gere tabela de taxa de vit├│ria. 
+Proponha ajustes SOMENTE em content/config/pvp.json e formulas.json, rode de novo e compare antes e depois.
+```
+
+## H) PROMPT DE REVIS├âO DE SEGURAN├çA
+```
+Fa├ºa uma revis├úo de seguran├ºa seguindo 11_SEGURANCA.md: procure qualquer lugar onde o servidor confia no cliente, 
+possibilidade de duplicar item, falta de rate limit e valida├º├úo de ids. Liste achados por gravidade e corrija os cr├¡ticos com testes.
+```

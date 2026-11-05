@@ -1,0 +1,46 @@
+﻿# PACOTE DE PROJETO ÔÇö RPG ONLINE DE MUNDO ABERTO (inspirado nas mec├ónicas de MMORPGs cl├íssicos)
+
+Este pacote ├® o "c├®rebro" do projeto. Foi feito para o Claude Code (Opus 5.5) ler, entender a estrat├®gia e retomar o trabalho em qualquer sess├úo sem se perder.
+
+## Como o humano usa este pacote
+1. Crie uma pasta vazia para o projeto (ex.: `D:\MeuRPG`) e extraia este ZIP dentro dela.
+2. Abra o terminal nessa pasta e rode `claude` (Claude Code).
+3. Cole o "PROMPT DE IN├ìCIO DE SESS├âO" de `14_PROMPTS.md`. ├ë sempre o mesmo, em toda sess├úo nova.
+4. Quando a janela de uso acabar, nada se perde: o estado est├í em `CHECKPOINT.md` + git.
+5. Na pr├│xima janela, cole o mesmo prompt de in├¡cio. O agente retoma de onde parou.
+
+## Como o agente (Claude) deve usar este pacote
+Leia nesta ordem, SEMPRE, no in├¡cio de cada sess├úo:
+1. `CLAUDE.md` (regras permanentes)
+2. `CHECKPOINT.md` (onde paramos, pr├│ximo passo exato)
+3. O arquivo da fase atual em `08_FASES.md`
+4. S├│ ent├úo os documentos de apoio necess├írios para a tarefa (n├úo leia tudo se n├úo precisar; economiza cota)
+
+## Mapa dos arquivos
+| Arquivo | Conte├║do |
+|---|---|
+| CLAUDE.md | Regras permanentes e protocolo de sess├úo |
+| CHECKPOINT.md | Estado atual, decis├Áes, pr├│ximo passo. ATUALIZAR SEMPRE |
+| 01_VISAO_E_ESCOPO.md | O que ├® o jogo, pilares, o que N├âO fazer |
+| 02_ARQUITETURA.md | Stack proposta, m├│dulos, estrutura de pastas |
+| 03_MECANICAS.md | Todas as mec├ónicas de jogo (stats, combate, itens, drop, PvP, eventos...) |
+| 04_DADOS_EXTENSIVEIS.md | Como adicionar itens, NPCs, monstros, bosses, quests, mapas sem mexer no c├│digo |
+| 05_REDE_E_PROTOCOLO.md | Protocolo pr├│prio cliente-servidor |
+| 06_SERVIDOR.md | Detalhes do servidor autoritativo |
+| 07_CLIENTE.md | Detalhes do cliente, UI, mundo aberto |
+| 08_FASES.md | Roadmap completo em fases com crit├®rios de aceita├º├úo |
+| 09_TESTES_QUALIDADE.md | Estrat├®gia de testes |
+| 10_PVP_BALANCEAMENTO.md | PvP equilibrado, PK, ranking |
+| 11_SEGURANCA.md | Anti-cheat, valida├º├Áes, conta |
+| 12_LEGAL_ORIGINALIDADE.md | Regras para n├úo copiar conte├║do protegido |
+| 13_REFERENCIA_PESQUISA.md | O que se sabe sobre os MMORPGs cl├íssicos, com fontes |
+| 14_PROMPTS.md | Prompts prontos para cada situa├º├úo |
+| ASSETS_LICENCAS.md / THIRD_PARTY.md | Registro de licen├ºas de arte e bibliotecas |
+| templates/ | Modelos de ADR, log de sess├úo |
+| data_examples/ | Exemplos JSON de item, monstro, NPC, quest, mapa, drop, skill |
+| checkpoints/ | Hist├│rico de sess├Áes (um arquivo por sess├úo) |
+
+## Aviso honesto sobre expectativas
+- O agente escreve c├│digo, ferramentas, testes e documenta├º├úo. Ele N├âO cria arte 3D, anima├º├Áes e sons de qualidade profissional. Use assets pr├│prios, comprados ou de bibliotecas com licen├ºa livre (ver 12_LEGAL_ORIGINALIDADE.md).
+- Um MMORPG completo leva muitas sess├Áes. Este pacote existe para tornar isso poss├¡vel em pequenos passos verific├íveis.
+- Os n├║meros de balanceamento s├úo pontos de partida. Precisam de testes de jogo reais.

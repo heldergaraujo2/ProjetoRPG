@@ -1,0 +1,32 @@
+﻿# 07 ÔÇö CLIENTE (engine proposta: Godot 4)
+
+## Responsabilidades
+Renderizar, tocar ├íudio, capturar entrada, mostrar UI, prever movimento local, interpolar entidades remotas. NENHUMA regra de jogo decisiva.
+
+## M├│dulos
+- `Net`: conex├úo, handshake, fila de mensagens, reconex├úo.
+- `World`: carregamento de chunks por proximidade, terreno, objetos est├íticos, ├ígua, n├®voa, ilumina├º├úo.
+- `Entities`: jogadores, monstros, NPCs, itens no ch├úo; ciclo de vida guiado por Spawn/Despawn do servidor.
+- `Animation`: m├íquina de estados de anima├º├úo por tipo de entidade; anima├º├Áes por id (idle, andar, atacar, skill, morrer).
+- `Equipment`: composi├º├úo visual do personagem (partes/slots) a partir de asset ids. Trocar equipamento = trocar malha/material do slot.
+- `UI`: framework de janelas independentes da l├│gica.
+- `Audio`, `Input`, `Config`, `Assets` (carregador por asset id com cache e valida├º├úo).
+
+## UI (100% pr├│pria)
+Janelas: HUD (vida/mana/AG/XP, barra de skills, alvo, minimapa), invent├írio, equipamento, atributos, skills, loja, armaz├®m, party, guilda, chat, quests, mapa-m├║ndi, configura├º├Áes, sele├º├úo de personagem, login, eventos, ranking.
+Requisitos: temas, escala por resolu├º├úo (UI em unidades relativas), atalhos configur├íveis, arrastar e soltar, tooltips ricos (compara├º├úo de itens), acessibilidade (tamanho de fonte, daltonismo).
+Arquitetura: componentes reutiliz├íveis + "view model" ligado a eventos do servidor (UI n├úo chama l├│gica, s├│ reage a estado).
+
+## Mundo aberto no cliente
+- Chunks de ~64ÔÇô128 m carregados em anel ao redor do jogador, carga ass├¡ncrona, descarga por dist├óncia.
+- LOD de modelos e terreno, culling por frustum, instancing de vegeta├º├úo/objetos repetidos.
+- Or├ºamento de mem├│ria e de draw calls medido por cena de teste.
+
+## Assets
+- Pipeline: importar ÔåÆ validar ÔåÆ registrar no manifest. Formato recomendado: glTF/GLB para modelos, PNG/KTX2 para texturas, OGG para ├íudio.
+- Fase inicial: usar placeholders (cubos/c├ípsulas coloridos) para testar sistemas ANTES de ter arte final.
+- Licen├ºas: s├│ assets originais ou com licen├ºa livre registrada em `ASSETS_LICENCAS.md`.
+
+## Teste de cliente
+- Cena de teste "sandbox" sem servidor para UI e renderiza├º├úo.
+- Modo headless para testes automatizados de l├│gica de cliente (net, parsing).

@@ -1,0 +1,47 @@
+﻿# CHECKPOINT ÔÇö ESTADO ATUAL DO PROJETO
+(O agente atualiza este arquivo ao concluir cada tarefa. ├ë a fonte de verdade para retomar o trabalho.)
+
+## Status geral
+- Fase atual: FASE 0 ÔÇö Prepara├º├úo
+- ├Ültima tarefa conclu├¡da: (nenhuma)
+- Data da ├║ltima atualiza├º├úo: (preencher)
+
+## PR├ôXIMO PASSO EXATO
+1. Ler docs/MASTER_PLAN.md e docs/phases/PHASE-00.md, al├®m dos documentos obrigat├│rios listados na especifica├º├úo.
+2. Auditar a ├írvore real, o estado Git, o ambiente e os projetos existentes sem sobrescrever trabalho.
+3. Validar a stack proposta e registrar a decis├úo em docs/adr/ADR-001-stack.md antes de criar ou mover estrutura.
+
+## Decis├Áes tomadas (ADRs)
+(nenhuma ainda. Proposta inicial em 02_ARQUITETURA.md, a confirmar)
+
+## Ambiente
+- SO / engine / vers├Áes: (preencher na Fase 0)
+- Comandos: build = (preencher) | testes = (preencher) | rodar servidor = (preencher) | rodar cliente = (preencher)
+
+## Progresso por fase
+| Fase | Estado | Observa├º├Áes |
+|---|---|---|
+| 0 Prepara├º├úo | N├âO INICIADA | |
+| 1 Funda├º├úo do servidor | N├âO INICIADA | |
+| 2 Cliente base e login | N├âO INICIADA | |
+| 3 Mundo e movimento | N├âO INICIADA | |
+| 4 Combate, monstros, skills | N├âO INICIADA | |
+| 5 Itens, invent├írio, drop, lojas | N├âO INICIADA | |
+| 6 Progress├úo e classes | N├âO INICIADA | |
+| 7 Social | N├âO INICIADA | |
+| 8 Refino, crafting, op├º├Áes | N├âO INICIADA | |
+| 9 PvP, PK, ranking | N├âO INICIADA | |
+| 10 Quests, NPCs, bosses | N├âO INICIADA | |
+| 11 Eventos | N├âO INICIADA | |
+| 12 Ferramentas de conte├║do | N├âO INICIADA | |
+| 13 Performance, seguran├ºa, QA | N├âO INICIADA | |
+| 14 Polimento e lan├ºamento | N├âO INICIADA | |
+
+## PROBLEMAS ABERTOS
+(nenhum)
+
+## SUPOSI├ç├òES EM VIGOR
+(nenhuma)
+
+## Hist├│rico resumido (acrescentar, nunca apagar)
+- 2026-11-05: documenta├º├úo de planejamento preparada na branch docs/plan: docs/MASTER_PLAN.md, docs/CONTINUITY.md e docs/phases/PHASE-00.md. Fase 0 continua N├âO INICIADA; nenhuma auditoria t├®cnica, build, teste ou implementa├º├úo de gameplay foi executada nesta altera├º├úo.
